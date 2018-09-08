@@ -13,6 +13,10 @@ output:
     code_folding: hide
 
 ---
+--------------------------------------------------------
+Kaggle URL: https://www.kaggle.com/anshumoudgil/hrss-phenomena-presentation/notebook
+---------------------------------------------------------
+
 Dear Reader,
 
 This notebook is about High Storage System Data for Energy Optimization, an "Industry 4.0 or Industrial IOT" experiment. It views the data from various perspectives i.e. the concept, the rationale and the approach behind it. It's been a big exercise and I hope you (reader) too will enjoy this notebook. Hope it'll do justice to help you all understand some of the concepts of Industry 4.0.
