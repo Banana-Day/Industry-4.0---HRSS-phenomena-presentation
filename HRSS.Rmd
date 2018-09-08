@@ -1,0 +1,1315 @@
+---
+title: "HRSS"
+author: "Anshuman Moudgil"
+date: "06 September 2018"
+output:
+  html_document:
+    number_sections: true
+    toc: true
+    fig_width: 7
+    fig_height: 4.5
+    theme: readable
+    highlight: tango
+    code_folding: hide
+
+---
+Dear Reader,
+
+This notebook is about High Storage System Data for Energy Optimization, an "Industry 4.0 or Industrial IOT" experiment. It views the data from various perspectives i.e. the concept, the rationale and the approach behind it. It's been a big exercise and I hope you (reader) too will enjoy this notebook. Hope it'll do justice to help you all understand some of the concepts of Industry 4.0.
+
+# Project (Industry 4.0 or Industrial IOT)
+
+High Rack Storage System (or HRSS) was one of the many experiments conducted under project [IMPROVE](http://improve-vfof.eu/). The primary objective (*as quoted on the website*) of **IMPROVE** was to create solutions and technologies for industries in times of ** Industry 4.0 and Industrial IOT (or IIOT)**. The project team has been working on principle of **Human Machine Interface**.
+
+![Virtual factory of the future](http://improve-vfof.eu/uploads/pics/IMPROVE_enhance_the_manufacturing_process_01.png)
+
+**NB:-** This project has received funding from European Union's Horizon 2020 research and innovation program. 
+
+In general the analysis and diagnosis of complex production plants (or physical systems) has gained new attention due to research agendas such as **Cyber-Physical Production Systems (CPPSs) i.e. US' initiative of Industrial Internet or German pendant Industry 4.0**. In these agendas, a major focus is on the self diagnosis capabilities for complex and distributed CPPSs. Typical goals of such self-diagnosis approaches are the detection of anomalies, of sub-optimal energy consumption, of error causes or of wear.[2]
+
+...A typical CPPS solution for these challenges is a data-driven and machine learning based approach, which complements the traditional solutions based on manual models. This places data analysis and machine learning algorithms at the heart of CPPS, i.e. Industry 4.0 scenarios.[2]
+
+# Introduction of System
+
+[SmartFactoryOWL](https://www.smartfactory-owl.de/index.php/en/) in collaboration with [Institute Industrial IT](https://www.hs-owl.de/init/) - both based in Germany - had created a demonstrator of High Rack Storage System. The objective was analysis and diagnosis of anomalies in the system. An generic approach has been depicted in image below. 
+
+![Model based Analysis](https://www.hs-owl.de/init/fileadmin/_processed_/csm_Grafik_Model-based_Anomaly_Detection_Approach_1d97b708c1.jpg)
+
+In this experiment, the HRSS demonstrator transports wares (or objects) between its different shelves.[3] A simulation [video](https://www.youtube.com/watch?v=3o8PwyuwXXc) has been provided to see (and observe) how a pallet moves on 4 conveyors and 2 rails? There are two iterations to it - one is Standard iteration as a milk run and other is Optimized iteration to simulate energy optimization. I would encourage every reader to first see it before you move ahead on notebook. Understanding of physical flow will help you better comprehend the image (below), literature created, and recorded data by SmartFactoryOWL and inIT.
+
+Conveyors and Rails in simulator - their nomenclature [Smartfactory: High Storage System - demonstrator ] (https://www.kaggle.com/inIT-OWL/high-storage-system-data-for-energy-optimization/home)
+
+As I have observed the video frame by frame (*at slow speed and multiple times*), in my opinion, there are two aspects to understand the phenomenon of HRSS demonstrator. One is Physical understanding of flow and second is data understanding or how data has been collected and measured?
+
+**Please Note:** In the  [discussion](https://www.kaggle.com/inIT-OWL/high-storage-system-data-for-energy-optimization/discussion/62331) the data creator had mentioned:"Unfortunately we can't be 100% sure as the nature of the distance (*one of the many variables of data*) signal anymore because of **lost knowledge concerning the implementation**". This stated loss of knowledge **made me redraw the implementation** and run the complete rail system phenomenon (*with the help of video*).
+
+## Physical-Flow Understanding
+
+The rail system demonstrator has 4 conveyors BRU, BHR, BHL, BLO and 2 rails HR, HL. The conveyors BRU and BLU can only move horizontally and where as conveyors BHR and BHL can move both horizontally and vertically; with the help of rails. The quoted dimensions of all 4 conveyors are 640mm x 85mm x 297mm. Dimensions of rails HR and HL are not given. As per video, each conveyor is driven by it's own electric motor (power transmission to conveyors is by belts) and I hope there are individual systems for rails too. 
+
+In this racks (*or stacked up*) configuration of conveyors and rails there were two sets of iterations - Standard and Optimized. Each with two sets of conditions - Normal and Anomalized.
+
+### Standard Physical-Flow (Normal & Anomalous):
+
+Step by step description of Physical flow - both forward and backwards. 
+
+1 Forward movement of pallet
+
+1.1 A pallet is placed on conveyor \ <sub>(right-edge-of)</sub>BRU\
+
+1.2 The pallet on conveyor \ BRU<sub>(horizontal-movement)</sub> --> <sub>(transfered-to-right-edge)</sub>BHR\
+
+1.3 Conveyors \ BHR + BHL --> <sub>(move-vertically-up-via)</sub>HR + HL\. Pallet stays on conveyor \ <sub>(right-edge-of)</sub>BHR\
+
+1.4 Pallet on conveyor \ BHR<sub>(horizontal-movement)</sub> --> <sub>(transfered-to-right-edge)</sub>BHL\
+
+1.5 Pallet on conveyor \ BHL<sub>(horizontal-movement)</sub> --> <sub>(transfered-to-right-edge)</sub>BLO\
+
+1.6 Pallet on conveyor \ BLO<sub>(horizontal-movement)</sub> --> <sub>(move-from-right-to-left-edge)</sub>BLO\
+
+
+2 Backward movement of pallet
+
+2.1 Pallet on conveyor \ BLO<sub>(horizontal-movement)</sub> --> <sub>(move-from-left-to-right-edge)</sub>BLO\
+
+2.2 Pallet on conveyor\ BLO<sub>(horizontal-movement)</sub> --> <sub>(transfered-to-left-edge)</sub>BHL\
+
+2.3 Conveyors \ BHL + BHR --> <sub>(move-vertically-down-via)</sub>HR + HL \. Pallet stays on conveyor \ <sub>(left-edge-of)</sub>BHL\
+
+2.4 Pallet on conveyor \ BHL<sub>(horizontal-movement)</sub> --> <sub>(transfered-to-left-edge)</sub>BHR\
+
+2.5 Pallet on conveyor \ BHR<sub>(horizontal-movement)</sub> --> <sub>(transfered-to-left-edge)</sub>BRU\
+
+2.6 Pallet on conveyor \ BRU<sub>(horizontal-movement)</sub> --> <sub>(move-from-left-to-right-edge)</sub>BRU\
+
+This concludes the full cycle of one iteration of Standard form; both for Normal and Anomalous (*artificially induced*) iterations.
+
+### Optimized Physical-Flow (Normal & Anomalous):
+
+Step by step description of Physical flow - both forward and backwards.
+
+1 Forward movement of pallet
+
+1.1 A pallet is placed on conveyor \ <sub>(right-edge-of)</sub>BRU\
+
+1.2 The pallet on conveyor \ BRU<sub>(horizontal-movement)</sub> --> <sub>(transfered-to-right-edge)</sub>BHR\
+
+1.3 Conveyors \ BHR + BHL --> <sub>(move-vertically-up-via)</sub>HR + HL and simultaneously Pallet moves on \ BHR<sub>(horizontal-movement)</sub> + BHL<sub>(horizontal-movement)</sub> --> <sub>(transfered-to-right-edge)</sub>BLO\
+
+1.4 Pallet on conveyor \ BLO<sub>(horizontal-movement)</sub> --> <sub>(move-from-right-to-left-edge)</sub>BLO\
+
+
+2 Backward Movement of pallet
+
+2.1 Pallet on conveyor \ BLO<sub>(horizontal-movement)</sub> --> <sub>(move-from-left-to-right-edge)</sub>BLO\
+
+2.2 Pallet on conveyor \ BLO<sub>(horizontal-movement)</sub> --> <sub>(transfered-to-left-edge)</sub>BHL\
+
+2.3 Conveyors \ BHL + BHR --> <sub>(move-vertically-down-via)</sub>HR + HL \ and simultaneously Pallet moves on \ BHL<sub>(horizontal-movement)</sub> + BHR<sub>(horizontal-movement)</sub> --> <sub>(transfered-to-left-edge)</sub>BRU\
+
+2.4 Pallet on conveyor \ BRU<sub>(horizontal-movement)</sub> --> <sub>(move-from-left-to-right-edge)</sub>BRU\
+
+This concludes the full cycle of one iteration of Optimized form; both for Normal and Anomalous (*artificially induced*) iterations.
+
+## Data Extraction Technique
+
+The objective of this experiment (HRSS demonstrator) was self-diagnosis and anomaly detection. The technique used was to compare normal learned data with anomalous data (*for both standard and optimized versions*) to extract underlying data behavior models, anomalies, timings etc.[2,3].
+
+To achieve this objective each conveyor belt was fitted with three induction sensors. First sensor is at 36mm from left edge, second at 266mm from left edge and third at 36mm from right edge. NO sensors had been mentioned for rails (at least in the overview of data on kaggle). So we may assume the sensors on conveyors BHR and BHL may have been used to measure data about the rails HR and HL.
+
+Four data files of this experiment were provided: Normal Standard, Normal Optimized, Anomalous Standard, and Anomalous Optimized.
+
+# Data
+
+Lets look into the data sets and various files. As first step I have uploaded all the files and various packages to help create the analyses.
+
+```{r, warning=FALSE, message=FALSE}
+library(dplyr)
+library(ggplot2)
+library(plotly)
+library(gridExtra)
+library(rpart)
+library(rpart.plot)
+library(corrplot)
+library(DescTools)
+
+NSt <- read.csv("HRSS_normal_standard.csv", header = TRUE)
+NOp <- read.csv("HRSS_normal_optimized.csv", header = TRUE)
+ASt <- read.csv("HRSS_anomalous_standard.csv", header = TRUE)
+AOp <- read.csv("HRSS_anomalous_optimized.csv", header = TRUE)
+```
+
+## HRSS Data glimpse {.tabset .tabset-fade .tabset-pills}
+
+In all 4 data sets there are same number and kind of variables. There are main 3 variables (*or recorded data*) are for each of the conveyors (*BRU, BHR, BHL, BLO*) and rails(*HR, HL*). Besides these variables are also accompanied with Timestamp and Labels. The variables are as follows:
+
+1. Weg :: Distance
+2. Power:: Power
+3. Voltage:: Volts
+4. Timestamp:: Time elapsed in seconds to complete one forward-backward motion i.e. start from initial position 'i' at 't=0', on conveyor BRU and go to conveyor BLO and come back at initial position 'i'.
+5. Labels:: '1' if there is an anomaly, or '0' otherwise.
+
+### HRSS Normal Standard data - glimpse
+
+```{r, warning=FALSE, message=FALSE}
+glimpse(NSt)
+```
+
+### HRSS Normal Optimized data - glimpse
+
+```{r, warning=FALSE, message=FALSE}
+glimpse(NOp)
+```
+
+### HRSS Anomalous Standard data - glimpse
+
+```{r, warning=FALSE, message=FALSE}
+glimpse(ASt)
+```
+
+### HRSS Anomalous Optimized data - glimpse
+
+```{r, warning=FALSE, message=FALSE}
+glimpse(AOp)
+```
+
+## HRSS Data Cycles
+
+Each data-set has average +22000 rows (*or observations*). IF you take timestamp as a reference point then we can calculate number of cycles per data set per simulation. Number of Cycles per data set is my first new feature.
+
+Normal Standard data-set has 107 operation cycles. The new variable is named Cycle Number or CyN.
+
+```{r, warning=FALSE, message=FALSE}
+
+table(NSt$Timestamp == 0)
+
+grp = 0
+for (i in 1:nrow(NSt)){
+  if(NSt$Timestamp[i] == 0){
+    grp=grp+1;
+    NSt$CyN[i] = grp;
+  } else{
+    NSt$CyN[i] = grp;
+  }
+}
+```
+
+Normal Optimized data-set has 111 operation cycles. The new variable is named Cycle Number or CyN.
+
+```{r, warning=FALSE, message=FALSE}
+
+table(NOp$Timestamp == 0)
+
+grp = 0
+for (i in 1:nrow(NOp)){
+  if(NOp$Timestamp[i] == 0){
+    grp=grp+1;
+    NOp$CyN[i] = grp;
+  } else{
+    NOp$CyN[i] = grp;
+  }
+}
+```
+
+Anomalous Standard data-set has 107 operation cycles. The new variable is named Cycle Number or CyN.
+
+```{r, warning=FALSE, message=FALSE}
+
+table(ASt$Timestamp == 0)
+
+grp = 0
+for (i in 1:nrow(ASt)){
+  if(ASt$Timestamp[i] == 0){
+    grp=grp+1;
+    ASt$CyN[i] = grp;
+  } else{
+    ASt$CyN[i] = grp;
+  }
+}
+```
+
+Anomalous Optimized data-set has 111 operation cycles. The new variable is named Cycle Number or CyN.
+
+```{r, warning=FALSE, message=FALSE}
+
+table(AOp$Timestamp == 0)
+
+grp = 0
+for (i in 1:nrow(AOp)){
+  if(AOp$Timestamp[i] == 0){
+    grp=grp+1;
+    AOp$CyN[i] = grp;
+  } else{
+    AOp$CyN[i] = grp;
+  }
+}
+```
+
+Now for the ease of analyses let's rename the original columns. In fact due to similarity of variables in data-sets all 4 files have same names.
+
+```{r, warning=FALSE, message=FALSE}
+NSt <- rename(NSt, Weg.BLO= I_w_BLO_Weg, Weg.BHL= I_w_BHL_Weg, Weg.BHR= I_w_BHR_Weg, Weg.BRU= I_w_BRU_Weg, Weg.HR= I_w_HR_Weg, Weg.HL= I_w_HL_Weg, Power.BLO= O_w_BLO_power, Power.BHL= O_w_BHL_power, Power.BHR= O_w_BHR_power, Power.BRU= O_w_BRU_power, Power.HR= O_w_HR_power, Power.HL= O_w_HL_power, Voltage.BLO= O_w_BLO_voltage, Voltage.BHL= O_w_BHL_voltage, Voltage.BHR= O_w_BHR_voltage, Voltage.BRU= O_w_BRU_voltage, Voltage.HR= O_w_HR_voltage, Voltage.HL= O_w_HL_voltage)
+
+NOp <- rename(NOp, Weg.BLO= I_w_BLO_Weg, Weg.BHL= I_w_BHL_Weg, Weg.BHR= I_w_BHR_Weg, Weg.BRU= I_w_BRU_Weg, Weg.HR= I_w_HR_Weg, Weg.HL= I_w_HL_Weg, Power.BLO= O_w_BLO_power, Power.BHL= O_w_BHL_power, Power.BHR= O_w_BHR_power, Power.BRU= O_w_BRU_power, Power.HR= O_w_HR_power, Power.HL= O_w_HL_power, Voltage.BLO= O_w_BLO_voltage, Voltage.BHL= O_w_BHL_voltage, Voltage.BHR= O_w_BHR_voltage, Voltage.BRU= O_w_BRU_voltage, Voltage.HR= O_w_HR_voltage, Voltage.HL= O_w_HL_voltage)
+
+ASt <- rename(ASt, Weg.BLO= I_w_BLO_Weg, Weg.BHL= I_w_BHL_Weg, Weg.BHR= I_w_BHR_Weg, Weg.BRU= I_w_BRU_Weg, Weg.HR= I_w_HR_Weg, Weg.HL= I_w_HL_Weg, Power.BLO= O_w_BLO_power, Power.BHL= O_w_BHL_power, Power.BHR= O_w_BHR_power, Power.BRU= O_w_BRU_power, Power.HR= O_w_HR_power, Power.HL= O_w_HL_power, Voltage.BLO= O_w_BLO_voltage, Voltage.BHL= O_w_BHL_voltage, Voltage.BHR= O_w_BHR_voltage, Voltage.BRU= O_w_BRU_voltage, Voltage.HR= O_w_HR_voltage, Voltage.HL= O_w_HL_voltage)
+
+AOp <- rename(AOp, Weg.BLO= I_w_BLO_Weg, Weg.BHL= I_w_BHL_Weg, Weg.BHR= I_w_BHR_Weg, Weg.BRU= I_w_BRU_Weg, Weg.HR= I_w_HR_Weg, Weg.HL= I_w_HL_Weg, Power.BLO= O_w_BLO_power, Power.BHL= O_w_BHL_power, Power.BHR= O_w_BHR_power, Power.BRU= O_w_BRU_power, Power.HR= O_w_HR_power, Power.HL= O_w_HL_power, Voltage.BLO= O_w_BLO_voltage, Voltage.BHL= O_w_BHL_voltage, Voltage.BHR= O_w_BHR_voltage, Voltage.BRU= O_w_BRU_voltage, Voltage.HR= O_w_HR_voltage, Voltage.HL= O_w_HL_voltage)
+```
+
+## HRSS First Visual {.tabset .tabset-fade .tabset-pills}
+
+### HRSS Normal Standard data - 1st view
+
+First visual of data showing Weg (or distance) on time stamp for all cycles. The Weg (or distance) has both positive and negative values.
+
+```{r, warning=FALSE, message=FALSE}
+NSt %>% plot_ly(type = 'scatter', mode = 'markers') %>% 
+  add_trace(x= ~Timestamp, y= ~Weg.BLO, frame= ~CyN ,name = "BLO", opacity = 0.90) %>% 
+  add_trace(x= ~Timestamp, y= ~Weg.BHL, frame= ~CyN, name = "BHL", opacity = 0.90) %>% 
+  add_trace(x= ~Timestamp, y= ~Weg.BHR, frame= ~CyN, name = "BHR", opacity = 0.90) %>% 
+  add_trace(x= ~Timestamp, y= ~Weg.BRU, frame= ~CyN, name = "BRU", opacity = 0.90) %>% 
+  add_trace(x= ~Timestamp, y= ~Weg.HL, frame= ~CyN, name = "HL", opacity = 0.90) %>% 
+  add_lines(x= ~Timestamp, y= ~Weg.HR, frame= ~CyN, name = "HR", opacity = 0.85) %>% 
+  animation_opts(frame = 1000) %>%
+  animation_slider(currentvalue = list(prefix = "Cycle Number: ", font = list(color="royalblue")))%>%
+  layout(title = "Normal Standard: Distance recorded along Timestamp", xaxis = list(title = 'Timestamp in secs'), yaxis = list(title = 'WEG (or Distance)'))
+```
+
+### HRSS Normal Optimized data - 1st view
+
+First visual of data showing Weg (or distance) on time stamp for all cycles. The Weg (or distance) has both positive and negative values.
+
+```{r, warning=FALSE, message=FALSE}
+NOp %>% plot_ly(type = 'scatter', mode = 'markers') %>% 
+  add_trace(x= ~Timestamp, y= ~Weg.BLO, frame= ~CyN ,name = "BLO", opacity = 0.90) %>% 
+  add_trace(x= ~Timestamp, y= ~Weg.BHL, frame= ~CyN, name = "BHL", opacity = 0.90) %>% 
+  add_trace(x= ~Timestamp, y= ~Weg.BHR, frame= ~CyN, name = "BHR", opacity = 0.90) %>% 
+  add_trace(x= ~Timestamp, y= ~Weg.BRU, frame= ~CyN, name = "BRU", opacity = 0.90) %>% 
+  add_trace(x= ~Timestamp, y= ~Weg.HL, frame= ~CyN, name = "HL", opacity = 0.90) %>% 
+  add_lines(x= ~Timestamp, y= ~Weg.HR, frame= ~CyN, name = "HR", opacity = 0.85) %>% 
+  animation_opts(frame = 1200) %>%
+  animation_slider(currentvalue = list(prefix = "Cycle Number: ", font = list(color="navyblue")))%>%
+  layout(title = "Normal Optimized: Distance recorded along Timestamp", xaxis = list(title = 'Timestamp in secs'), yaxis = list(title = 'WEG (or Distance)'))
+```
+
+### HRSS Anomalous Standard data - 1st view
+
+First visual of data showing Weg (or distance) on time stamp for all cycles. The Weg (or distance) has both positive and negative values.
+
+```{r, warning=FALSE, message=FALSE}
+ASt %>% plot_ly(type = 'scatter', mode = 'markers') %>% 
+  add_trace(x= ~Timestamp, y= ~Weg.BLO, frame= ~CyN ,name = "BLO", opacity = 0.90) %>% 
+  add_trace(x= ~Timestamp, y= ~Weg.BHL, frame= ~CyN, name = "BHL", opacity = 0.90) %>% 
+  add_trace(x= ~Timestamp, y= ~Weg.BHR, frame= ~CyN, name = "BHR", opacity = 0.90) %>% 
+  add_trace(x= ~Timestamp, y= ~Weg.BRU, frame= ~CyN, name = "BRU", opacity = 0.90) %>% 
+  add_trace(x= ~Timestamp, y= ~Weg.HL, frame= ~CyN, name = "HL", opacity = 0.90) %>% 
+  add_lines(x= ~Timestamp, y= ~Weg.HR, frame= ~CyN, name = "HR", opacity = 0.85) %>% 
+  animation_opts(frame = 1200) %>%
+  animation_slider(currentvalue = list(prefix = "Cycle Number: ", font = list(color="navyblue")))%>%
+  layout(title = "Anomalous Standard: Distance recorded along Timestamp", xaxis = list(title = 'Timestamp in secs'), yaxis = list(title = 'WEG (or Distance)'))
+```
+
+### HRSS Anomalous Optimized data - 1st view
+
+First visual of data showing Weg (or distance) on time stamp for all cycles. The Weg (or distance) has both positive and negative values.
+
+```{r, warning=FALSE, message=FALSE}
+AOp %>% plot_ly(type = 'scatter', mode = 'markers') %>% 
+  add_trace(x= ~Timestamp, y= ~Weg.BLO, frame= ~CyN ,name = "BLO", opacity = 0.90) %>% 
+  add_trace(x= ~Timestamp, y= ~Weg.BHL, frame= ~CyN, name = "BHL", opacity = 0.90) %>% 
+  add_trace(x= ~Timestamp, y= ~Weg.BHR, frame= ~CyN, name = "BHR", opacity = 0.90) %>% 
+  add_trace(x= ~Timestamp, y= ~Weg.BRU, frame= ~CyN, name = "BRU", opacity = 0.90) %>% 
+  add_trace(x= ~Timestamp, y= ~Weg.HL, frame= ~CyN, name = "HL", opacity = 0.90) %>% 
+  add_lines(x= ~Timestamp, y= ~Weg.HR, frame= ~CyN, name = "HR", opacity = 0.85) %>% 
+  animation_opts(frame = 1200) %>%
+  animation_slider(currentvalue = list(prefix = "Cycle Number: ", font = list(color="navyblue")))%>%
+  layout(title = "Anomalous Optimized: Distance recorded along Timestamp", xaxis = list(title = 'Timestamp in secs'), yaxis = list(title = 'WEG (or Distance)'))
+```
+
+# Variables
+
+There are 3 main variables Weg (or Distance), Power, and Voltage that had been recorded for all the conveyors and rails in addition to Timestamp and Labels. 
+
+**Please Note:** Sensors recorded the data. They showed the values of Weg, Power, Voltage, Timestamp at that time = 't' and position = 'i'.
+
+Besides I have created more features for all the conveyors, rails and all the data sets - to visualize operations behavior as well. 
+
+1.  $$ \text{Total Power}_i = ∑\text{Power of Conveyors}_i +  ∑\text{Power of Rails}_i $$
+2.  $$ Time.Gap_i = Timestamp_i - Timestamp_{i-1} $$
+3.  $$ \text{∆ Weg}_i = Weg_i - Weg_{i-1} $$
+4.  $$ \text{∆ Power}_i = Power_i - Power_{i-1} $$
+5.  $$ \text{∆ Voltage}_i = Voltage_i - Voltage_{i-1} $$
+6.  $$ ∆ Velocity_i = \frac{Weg_i}{Time.Gap_i} $$
+
+Lets have a look into these variables.
+
+```{r, warning=FALSE, message=FALSE}
+NSt <- NSt%>% mutate(Tot.Power = Power.BLO + Power.BHL + Power.BHR + Power.BRU + Power.HL + Power.HR)
+NSt <- NSt%>% mutate(Time.Gap = ifelse(Timestamp == 0,0, (Timestamp - lag(Timestamp))))
+NSt.2 <- NSt
+```
+
+```{r, warning=FALSE, message=FALSE}
+NOp <- NOp%>% mutate(Tot.Power = Power.BLO + Power.BHL + Power.BHR + Power.BRU + Power.HL + Power.HR)
+NOp <- NOp%>% mutate(Time.Gap = ifelse(Timestamp == 0,0, (Timestamp - lag(Timestamp))))
+NOp.2 <- NOp
+```
+
+```{r, warning=FALSE, message=FALSE}
+ASt <- ASt%>% mutate(Tot.Power = Power.BLO + Power.BHL + Power.BHR + Power.BRU + Power.HL + Power.HR)
+ASt <- ASt%>% mutate(Time.Gap = ifelse(Timestamp == 0,0, (Timestamp - lag(Timestamp))))
+ASt.2 <- ASt
+```
+
+```{r, warning=FALSE, message=FALSE}
+AOp <- AOp%>% mutate(Tot.Power = Power.BLO + Power.BHL + Power.BHR + Power.BRU + Power.HL + Power.HR)
+AOp <- AOp%>% mutate(Time.Gap = ifelse(Timestamp == 0,0, (Timestamp - lag(Timestamp))))
+AOp.2 <- AOp
+```
+
+```{r, warning=FALSE, message=FALSE}
+
+NSt <- NSt%>% mutate(BLO.Weg = ifelse(Timestamp == 0,0, ifelse(Weg.BLO <= 0,0,(Weg.BLO - lag(Weg.BLO)))))
+NSt <- NSt%>% mutate(BLO.Vel = ifelse(Timestamp == 0,0, ifelse(Weg.BLO <= 0,0,(Weg.BLO - lag(Weg.BLO))/Time.Gap)))
+NSt <- NSt%>% mutate(BLO.Power = ifelse(Timestamp == 0,0, (Power.BLO - lag(Power.BLO))))
+NSt <- NSt%>% mutate(BLO.Voltage = ifelse(Timestamp == 0,0, (Voltage.BLO - lag(Voltage.BLO))))
+
+NSt <- NSt%>% mutate(BHL.Weg = ifelse(Timestamp == 0,0, ifelse(Weg.BHL <= 0,0, (Weg.BHL - lag(Weg.BHL)))))
+NSt <- NSt%>% mutate(BHL.Vel = ifelse(Timestamp == 0,0, ifelse(Weg.BHL <= 0,0,(Weg.BHL - lag(Weg.BHL))/Time.Gap)))
+NSt <- NSt%>% mutate(BHL.Power = ifelse(Timestamp == 0,0, (Power.BHL - lag(Power.BHL))))
+NSt <- NSt%>% mutate(BHL.Voltage = ifelse(Timestamp == 0,0, (Voltage.BHL - lag(Voltage.BHL))))
+
+NSt <- NSt%>% mutate(BHR.Weg = ifelse(Timestamp == 0,0, ifelse(Weg.BHR <= 0,0,(Weg.BHR - lag(Weg.BHR)))))
+NSt <- NSt%>% mutate(BHR.Vel = ifelse(Timestamp == 0,0, ifelse(Weg.BHR <= 0,0,(Weg.BHR - lag(Weg.BHR))/Time.Gap)))
+NSt <- NSt%>% mutate(BHR.Power = ifelse(Timestamp == 0,0, (Power.BHR - lag(Power.BHR))))
+NSt <- NSt%>% mutate(BHR.Voltage = ifelse(Timestamp == 0,0, (Voltage.BHR - lag(Voltage.BHR))))
+
+NSt <- NSt%>% mutate(BRU.Weg = ifelse(Timestamp == 0,0, ifelse(Weg.BRU <= 0,0,(Weg.BRU - lag(Weg.BRU)))))
+NSt <- NSt%>% mutate(BRU.Vel = ifelse(Timestamp == 0,0, ifelse(Weg.BRU <= 0,0,(Weg.BRU - lag(Weg.BRU))/Time.Gap)))
+NSt <- NSt%>% mutate(BRU.Power = ifelse(Timestamp == 0,0, (Power.BRU - lag(Power.BRU))))
+NSt <- NSt%>% mutate(BRU.Voltage = ifelse(Timestamp == 0,0, (Voltage.BRU - lag(Voltage.BRU))))
+
+NSt <- NSt%>% mutate(HR.Weg = ifelse(Timestamp == 0,0, (Weg.HR - lag(Weg.HR))))
+NSt <- NSt%>% mutate(HR.Vel = ifelse(Timestamp == 0,0, ifelse(Weg.HR <= 0,0,(Weg.HR - lag(Weg.HR))/Time.Gap)))
+NSt <- NSt%>% mutate(HR.Power = ifelse(Timestamp == 0,0, (Power.HR - lag(Power.HR))))
+NSt <- NSt%>% mutate(HR.Voltage = ifelse(Timestamp == 0,0, (Voltage.HR - lag(Voltage.HR))))
+
+NSt <- NSt%>% mutate(HL.Weg = ifelse(Timestamp == 0,0, (Weg.HL - lag(Weg.HL))))
+NSt <- NSt%>% mutate(HL.Vel = ifelse(Timestamp == 0,0, ifelse(Weg.HL <= 0,0,(Weg.HL - lag(Weg.HL))/Time.Gap)))
+NSt <- NSt%>% mutate(HL.Power = ifelse(Timestamp == 0,0, (Power.HL - lag(Power.HL))))
+NSt <- NSt%>% mutate(HL.Voltage = ifelse(Timestamp == 0,0, (Voltage.HL - lag(Voltage.HL))))
+
+NOp <- NOp%>% mutate(BLO.Weg = ifelse(Timestamp == 0,0, ifelse(Weg.BLO <= 0,0,(Weg.BLO - lag(Weg.BLO)))))
+NOp <- NOp%>% mutate(BLO.Vel = ifelse(Timestamp == 0,0, ifelse(Weg.BLO <= 0,0,(Weg.BLO - lag(Weg.BLO))/Time.Gap)))
+NOp <- NOp%>% mutate(BLO.Power = ifelse(Timestamp == 0,0, (Power.BLO - lag(Power.BLO))))
+NOp <- NOp%>% mutate(BLO.Voltage = ifelse(Timestamp == 0,0, (Voltage.BLO - lag(Voltage.BLO))))
+
+NOp <- NOp%>% mutate(BHL.Weg = ifelse(Timestamp == 0,0, ifelse(Weg.BHL <= 0,0, (Weg.BHL - lag(Weg.BHL)))))
+NOp <- NOp%>% mutate(BHL.Vel = ifelse(Timestamp == 0,0, ifelse(Weg.BHL <= 0,0,(Weg.BHL - lag(Weg.BHL))/Time.Gap)))
+NOp <- NOp%>% mutate(BHL.Power = ifelse(Timestamp == 0,0, (Power.BHL - lag(Power.BHL))))
+NOp <- NOp%>% mutate(BHL.Voltage = ifelse(Timestamp == 0,0, (Voltage.BHL - lag(Voltage.BHL))))
+
+NOp <- NOp%>% mutate(BHR.Weg = ifelse(Timestamp == 0,0, ifelse(Weg.BHR <= 0,0,(Weg.BHR - lag(Weg.BHR)))))
+NOp <- NOp%>% mutate(BHR.Vel = ifelse(Timestamp == 0,0, ifelse(Weg.BHR <= 0,0,(Weg.BHR - lag(Weg.BHR))/Time.Gap)))
+NOp <- NOp%>% mutate(BHR.Power = ifelse(Timestamp == 0,0, (Power.BHR - lag(Power.BHR))))
+NOp <- NOp%>% mutate(BHR.Voltage = ifelse(Timestamp == 0,0, (Voltage.BHR - lag(Voltage.BHR))))
+
+NOp <- NOp%>% mutate(BRU.Weg = ifelse(Timestamp == 0,0, ifelse(Weg.BRU <= 0,0,(Weg.BRU - lag(Weg.BRU)))))
+NOp <- NOp%>% mutate(BRU.Vel = ifelse(Timestamp == 0,0, ifelse(Weg.BRU <= 0,0,(Weg.BRU - lag(Weg.BRU))/Time.Gap)))
+NOp <- NOp%>% mutate(BRU.Power = ifelse(Timestamp == 0,0, (Power.BRU - lag(Power.BRU))))
+NOp <- NOp%>% mutate(BRU.Voltage = ifelse(Timestamp == 0,0, (Voltage.BRU - lag(Voltage.BRU))))
+
+NOp <- NOp%>% mutate(HR.Weg = ifelse(Timestamp == 0,0, (Weg.HR - lag(Weg.HR))))
+NOp <- NOp%>% mutate(HR.Vel = ifelse(Timestamp == 0,0, ifelse(Weg.HR <= 0,0,(Weg.HR - lag(Weg.HR))/Time.Gap)))
+NOp <- NOp%>% mutate(HR.Power = ifelse(Timestamp == 0,0, (Power.HR - lag(Power.HR))))
+NOp <- NOp%>% mutate(HR.Voltage = ifelse(Timestamp == 0,0, (Voltage.HR - lag(Voltage.HR))))
+
+NOp <- NOp%>% mutate(HL.Weg = ifelse(Timestamp == 0,0, (Weg.HL - lag(Weg.HL))))
+NOp <- NOp%>% mutate(HL.Vel = ifelse(Timestamp == 0,0, ifelse(Weg.HL <= 0,0,(Weg.HL - lag(Weg.HL))/Time.Gap)))
+NOp <- NOp%>% mutate(HL.Power = ifelse(Timestamp == 0,0, (Power.HL - lag(Power.HL))))
+NOp <- NOp%>% mutate(HL.Voltage = ifelse(Timestamp == 0,0, (Voltage.HL - lag(Voltage.HL))))
+
+ASt <- ASt%>% mutate(BLO.Weg = ifelse(Timestamp == 0,0, ifelse(Weg.BLO <= 0,0,(Weg.BLO - lag(Weg.BLO)))))
+ASt <- ASt%>% mutate(BLO.Vel = ifelse(Timestamp == 0,0, ifelse(Weg.BLO <= 0,0,(Weg.BLO - lag(Weg.BLO))/Time.Gap)))
+ASt <- ASt%>% mutate(BLO.Power = ifelse(Timestamp == 0,0, (Power.BLO - lag(Power.BLO))))
+ASt <- ASt%>% mutate(BLO.Voltage = ifelse(Timestamp == 0,0, (Voltage.BLO - lag(Voltage.BLO))))
+
+ASt <- ASt%>% mutate(BHL.Weg = ifelse(Timestamp == 0,0, ifelse(Weg.BHL <= 0,0, (Weg.BHL - lag(Weg.BHL)))))
+ASt <- ASt%>% mutate(BHL.Vel = ifelse(Timestamp == 0,0, ifelse(Weg.BHL <= 0,0,(Weg.BHL - lag(Weg.BHL))/Time.Gap)))
+ASt <- ASt%>% mutate(BHL.Power = ifelse(Timestamp == 0,0, (Power.BHL - lag(Power.BHL))))
+ASt <- ASt%>% mutate(BHL.Voltage = ifelse(Timestamp == 0,0, (Voltage.BHL - lag(Voltage.BHL))))
+
+ASt <- ASt%>% mutate(BHR.Weg = ifelse(Timestamp == 0,0, ifelse(Weg.BHR <= 0,0,(Weg.BHR - lag(Weg.BHR)))))
+ASt <- ASt%>% mutate(BHR.Vel = ifelse(Timestamp == 0,0, ifelse(Weg.BHR <= 0,0,(Weg.BHR - lag(Weg.BHR))/Time.Gap)))
+ASt <- ASt%>% mutate(BHR.Power = ifelse(Timestamp == 0,0, (Power.BHR - lag(Power.BHR))))
+ASt <- ASt%>% mutate(BHR.Voltage = ifelse(Timestamp == 0,0, (Voltage.BHR - lag(Voltage.BHR))))
+
+ASt <- ASt%>% mutate(BRU.Weg = ifelse(Timestamp == 0,0, ifelse(Weg.BRU <= 0,0,(Weg.BRU - lag(Weg.BRU)))))
+ASt <- ASt%>% mutate(BRU.Vel = ifelse(Timestamp == 0,0, ifelse(Weg.BRU <= 0,0,(Weg.BRU - lag(Weg.BRU))/Time.Gap)))
+ASt <- ASt%>% mutate(BRU.Power = ifelse(Timestamp == 0,0, (Power.BRU - lag(Power.BRU))))
+ASt <- ASt%>% mutate(BRU.Voltage = ifelse(Timestamp == 0,0, (Voltage.BRU - lag(Voltage.BRU))))
+
+ASt <- ASt%>% mutate(HR.Weg = ifelse(Timestamp == 0,0, (Weg.HR - lag(Weg.HR))))
+ASt <- ASt%>% mutate(HR.Vel = ifelse(Timestamp == 0,0, ifelse(Weg.HR <= 0,0,(Weg.HR - lag(Weg.HR))/Time.Gap)))
+ASt <- ASt%>% mutate(HR.Power = ifelse(Timestamp == 0,0, (Power.HR - lag(Power.HR))))
+ASt <- ASt%>% mutate(HR.Voltage = ifelse(Timestamp == 0,0, (Voltage.HR - lag(Voltage.HR))))
+
+ASt <- ASt%>% mutate(HL.Weg = ifelse(Timestamp == 0,0, (Weg.HL - lag(Weg.HL))))
+ASt <- ASt%>% mutate(HL.Vel = ifelse(Timestamp == 0,0, ifelse(Weg.HL <= 0,0,(Weg.HL - lag(Weg.HL))/Time.Gap)))
+ASt <- ASt%>% mutate(HL.Power = ifelse(Timestamp == 0,0, (Power.HL - lag(Power.HL))))
+ASt <- ASt%>% mutate(HL.Voltage = ifelse(Timestamp == 0,0, (Voltage.HL - lag(Voltage.HL))))
+
+AOp <- AOp%>% mutate(BLO.Weg = ifelse(Timestamp == 0,0, ifelse(Weg.BLO <= 0,0,(Weg.BLO - lag(Weg.BLO)))))
+AOp <- AOp%>% mutate(BLO.Vel = ifelse(Timestamp == 0,0, ifelse(Weg.BLO <= 0,0,(Weg.BLO - lag(Weg.BLO))/Time.Gap)))
+
+AOp <- AOp%>% mutate(BLO.Power = ifelse(Timestamp == 0,0, (Power.BLO - lag(Power.BLO))))
+AOp <- AOp%>% mutate(BLO.Voltage = ifelse(Timestamp == 0,0, (Voltage.BLO - lag(Voltage.BLO))))
+
+AOp <- AOp%>% mutate(BHL.Weg = ifelse(Timestamp == 0,0, ifelse(Weg.BHL <= 0,0, (Weg.BHL - lag(Weg.BHL)))))
+AOp <- AOp%>% mutate(BHL.Vel = ifelse(Timestamp == 0,0, ifelse(Weg.BHL <= 0,0,(Weg.BHL - lag(Weg.BHL))/Time.Gap)))
+AOp <- AOp%>% mutate(BHL.Power = ifelse(Timestamp == 0,0, (Power.BHL - lag(Power.BHL))))
+AOp <- AOp%>% mutate(BHL.Voltage = ifelse(Timestamp == 0,0, (Voltage.BHL - lag(Voltage.BHL))))
+
+AOp <- AOp%>% mutate(BHR.Weg = ifelse(Timestamp == 0,0, ifelse(Weg.BHR <= 0,0,(Weg.BHR - lag(Weg.BHR)))))
+AOp <- AOp%>% mutate(BHR.Vel = ifelse(Timestamp == 0,0, ifelse(Weg.BHR <= 0,0,(Weg.BHR - lag(Weg.BHR))/Time.Gap)))
+AOp <- AOp%>% mutate(BHR.Power = ifelse(Timestamp == 0,0, (Power.BHR - lag(Power.BHR))))
+AOp <- AOp%>% mutate(BHR.Voltage = ifelse(Timestamp == 0,0, (Voltage.BHR - lag(Voltage.BHR))))
+
+AOp <- AOp%>% mutate(BRU.Weg = ifelse(Timestamp == 0,0, ifelse(Weg.BRU <= 0,0,(Weg.BRU - lag(Weg.BRU)))))
+AOp <- AOp%>% mutate(BRU.Vel = ifelse(Timestamp == 0,0, ifelse(Weg.BRU <= 0,0,(Weg.BRU - lag(Weg.BRU))/Time.Gap)))
+AOp <- AOp%>% mutate(BRU.Power = ifelse(Timestamp == 0,0, (Power.BRU - lag(Power.BRU))))
+AOp <- AOp%>% mutate(BRU.Voltage = ifelse(Timestamp == 0,0, (Voltage.BRU - lag(Voltage.BRU))))
+
+AOp <- AOp%>% mutate(HR.Weg = ifelse(Timestamp == 0,0, (Weg.HR - lag(Weg.HR))))
+AOp <- AOp%>% mutate(HR.Vel = ifelse(Timestamp == 0,0, ifelse(Weg.HR <= 0,0,(Weg.HR - lag(Weg.HR))/Time.Gap)))
+AOp <- AOp%>% mutate(HR.Power = ifelse(Timestamp == 0,0, (Power.HR - lag(Power.HR))))
+AOp <- AOp%>% mutate(HR.Voltage = ifelse(Timestamp == 0,0, (Voltage.HR - lag(Voltage.HR))))
+
+AOp <- AOp%>% mutate(HL.Weg = ifelse(Timestamp == 0,0, (Weg.HL - lag(Weg.HL))))
+AOp <- AOp%>% mutate(HL.Vel = ifelse(Timestamp == 0,0, ifelse(Weg.HL <= 0,0,(Weg.HL - lag(Weg.HL))/Time.Gap)))
+AOp <- AOp%>% mutate(HL.Power = ifelse(Timestamp == 0,0, (Power.HL - lag(Power.HL))))
+AOp <- AOp%>% mutate(HL.Voltage = ifelse(Timestamp == 0,0, (Voltage.HL - lag(Voltage.HL))))
+```
+
+## Weg (or Distance) {.tabset .tabset-fade .tabset-pills}
+
+Apparently it seems it's the distance covered by a conveyor belts or rails to move the object and that was measured by sensors. But, if you have observed in **"First Visuals: Weg vs Timestamp"** graphs above OR we look at the summary 6 Weg (or Distance) variables in each file: it's observed the measured data can be both positive or negative. Plus maximum values measured in Weg for any conveyor can even be greater than the length of individual each conveyor i.e. 640 mm. This fact intrigued me. I asked in [Discussion](https://www.kaggle.com/inIT-OWL/high-storage-system-data-for-energy-optimization/discussion/62331) forum, about Whys?.
+
+My question : "Why Weg are in negatives? Does the positive or negative signs define vectors? Shall we assume the right hand end of each conveyor as [0,0]?  
+
+Response : "It is **very likely that the actual distance travelled was never measured directly, but through a proxy velocity. This also explains the jump signals.** They originate from resetting the constant of integration at certain way points. In this regard, negative distances are just that, summing up negative velocities yields a vector nature to the distance signal. If jumps are a problem, we suggest to investigate the velocity signal instead, take first derivative.
+
+$$ Velocity_i = \frac{Distance_{i+1}-Distance_i}{Time_{i+1}-Time_i} $$
+
+It might make more sense to investigate this instead of distance for some applications.
+
+I used the advised approach, created Velocity as a new feature and then looked into the Weg (or Distance) data and see how it emerges in quartiles.
+
+Weg (or Distance) for Conveyors can be either positive or negative sign.
+
+Weg (or Distance) for Rails are always with negative sign i.e. when Rails raise the conveyor platforms to a height the distance covered by rails is with negative sign. 
+
+```{r, warning=FALSE, message=FALSE}
+WegNSt <- NSt %>% ggplot()+
+  geom_violin(aes(x = BLO.Weg, y = Time.Gap), colour = "royalblue", alpha = 0.001)+
+  geom_violin(aes(x = BHL.Weg, y = Time.Gap), color = "orangered", alpha = 0.001)+
+  geom_violin(aes(x = BHR.Weg, y = Time.Gap), color = "maroon", alpha = 0.001)+
+  geom_violin(aes(x = BRU.Weg, y = Time.Gap), color = "slategrey", alpha = 0.001)+
+  ylim(0,0.25)+theme_light()+
+  labs(x = "", subtitle ="Normal Standard Data", y = "", caption = "BLO: Blue, BHL: Orange, BHR: Maroon, BRU: Grey")
+  
+WegNOp <- NOp %>% ggplot()+
+  geom_violin(aes(x = BLO.Weg, y = Time.Gap), colour = "royalblue", alpha = 0.001)+
+  geom_violin(aes(x = BHL.Weg, y = Time.Gap), color = "orangered", alpha = 0.001)+
+  geom_violin(aes(x = BHR.Weg, y = Time.Gap), color = "maroon", alpha = 0.001)+
+  geom_violin(aes(x = BRU.Weg, y = Time.Gap), color = "slategrey", alpha = 0.001)+
+  ylim(0,0.25)+theme_light()+
+  labs(x = "", subtitle ="Normal Optimized Data", y = "", caption = "BLO: Blue, BHL: Orange, BHR: Maroon, BRU: Grey")
+
+WegASt <- ASt %>% ggplot()+
+  geom_violin(aes(x = BLO.Weg, y = Time.Gap), colour = "royalblue", alpha = 0.002)+
+  geom_violin(aes(x = BHL.Weg, y = Time.Gap), color = "orangered", alpha = 0.002)+
+  geom_violin(aes(x = BHR.Weg, y = Time.Gap), color = "maroon", alpha = 0.002)+
+  geom_violin(aes(x = BRU.Weg, y = Time.Gap), color = "slategrey", alpha = 0.002)+
+  ylim(0,0.25)+theme_light()+facet_grid(.~Labels)+
+  labs(x = "", subtitle ="Anomalous Standard Data: '1' if anomaly else 'O'", y = "", caption = "BLO: Blue, BHL: Orange, BHR: Maroon, BRU: Grey")
+
+WegAOp <- AOp %>% ggplot()+
+  geom_violin(aes(x = BLO.Weg, y = Time.Gap), colour = "royalblue", alpha = 0.001)+
+  geom_violin(aes(x = BHL.Weg, y = Time.Gap), color = "orangered", alpha = 0.001)+
+  geom_violin(aes(x = BHR.Weg, y = Time.Gap), color = "maroon", alpha = 0.001)+
+  geom_violin(aes(x = BRU.Weg, y = Time.Gap), color = "slategrey", alpha = 0.001)+
+  ylim(0,0.25)+theme_light()+facet_grid(.~Labels)+
+  labs(x = "", subtitle ="Anomalous Optimized Data: '1' if anomaly else 'O'", y = "", caption = "BLO: Blue, BHL: Orange, BHR: Maroon, BRU: Grey")
+```
+
+### ∆ Weg: Normal data [Belts] - Standard vs Optimized
+
+Normal Standard and Normal Optimized data's ∆ Weg vs Time Gap variables were juxtaposed, as is in graph below, conveyor BHL data has shown big variations.
+
+```{r, warning=FALSE, message=FALSE}
+grid.arrange(WegNSt, WegNOp, ncol = 2, top = "Normal: Distance covered vs. Time gap", left= "∆ Time Gap (sec)", bottom= "∆ Weg(or Distance)")
+```
+
+### ∆ Weg: Anomalous data [Belts] - Standard vs Optimized
+
+Anomalous Standard and Anomalous Optimized data's ∆ Weg vs Time Gap variables were juxtaposed, as is in graph below, ∆ Weg of Anomalous Optimized data's anomalies' has more of a regular pattern than other 3 sub-sections. 
+
+```{r, warning=FALSE, message=FALSE}
+grid.arrange(WegASt, WegAOp, ncol = 2, top = "Anomalous: Distance covered vs. Time gap", left= "∆ Time Gap (sec)", bottom= "∆ Weg(or Distance)")
+```
+
+### ∆ Weg: Standard data [Belts] - Normal vs Anomalous
+
+Normal Standard and Anomalous Standard data's ∆ Weg vs Time Gap variables were juxtaposed, as is in graph below.
+
+```{r, warning=FALSE , message=FALSE}
+grid.arrange(WegNSt, WegASt, ncol = 2, top = "Normal vs Anomalous: Distance covered vs. Time gap", left= "∆ Time Gap (sec)", bottom= "∆ Weg(or Distance)")
+```
+
+### ∆ Weg: Optimized data [Belts] - Normal vs Anomalous
+
+Normal Optimized and Anomalous Optimized data's ∆ Weg vs Time Gap variables were juxtaposed, as is in graph below.
+
+```{r, warning=FALSE, message=FALSE}
+grid.arrange(WegNOp, WegAOp, ncol = 2, top = "Normal vs Anomalous: Distance covered vs. Time gap", left= "∆ Time Gap (sec)", bottom= "∆ Weg(or Distance)")
+```
+
+## Power
+
+The variable Power plays a pivotal role in these data sets. Its relation with time to calculate Energy and later to optimize it is the objective behind it. Therefore, I summed to all the quoted values in all the Power variables. This'll help us first see Power's behavior and total optimized power. 
+
+### Total Power distribution {.tabset .tabset-fade .tabset-pills}
+
+#### Power: Normal Standard Data
+
+```{r, warning=FALSE, message=FALSE}
+PlotFdist(NSt$Tot.Power, main = "Normal Standard: Total Power distribution")
+```
+
+#### Power: Normal Optimized Data
+
+```{r, warning=FALSE, message=FALSE}
+PlotFdist(NOp$Tot.Power, main = "Normal Optimized: Total Power distribution")
+```
+
+#### Power: Anomalous Standard Data
+
+```{r, warning=FALSE, message=FALSE}
+PlotFdist(ASt$Tot.Power, main = "Anomalous Standard: Total Power distribution")
+```
+
+#### Power: Anomalous Optimized Data
+
+```{r, warning=FALSE, message=FALSE}
+PlotFdist(AOp$Tot.Power, main = "Anomalous Optimized: Total Power distribution")
+```
+
+### Power variations - both negative & positive {.tabset .tabset-fade .tabset-pills}
+
+Power variations or ∆ Power variables were created to see how the power changes with each recorded timestamp by the sensors? Does it shows similar pattern as that of physical movement of the object on conveyor or it has some other pattern?
+
+```{r, warning=FALSE, message=FALSE}
+NSP.BLO <- NSt %>% filter(BLO.Power!=0) %>% ggplot(aes(x = Timestamp, y = BLO.Power))+ geom_jitter(color = "royalblue", alpha = 0.36, shape = 21, size = 1.5)+xlim(0,16)+ylim(-22000,28000)+theme_minimal()+labs(x = "", subtitle ="Normal Standard: BLO Power", y = "")
+NSP.BHL <- NSt %>% filter(BHL.Power!=0) %>% ggplot(aes(x = Timestamp, y = BHL.Power))+ geom_jitter(color = "orangered", alpha = 0.36, shape = 21, size = 1.5)+xlim(0,16)+ylim(-32000,33000)+theme_minimal()+labs(x = "", subtitle ="Normal Standard: BHL Power", y = "")
+NSP.BHR <- NSt %>% filter(BHR.Power!=0) %>% ggplot(aes(x = Timestamp, y = BHR.Power))+ geom_jitter(color = "maroon", alpha = 0.36, shape = 21, size = 1.5)+xlim(0,16)+ylim(-32000,33000)+theme_minimal()+labs(x = "", subtitle ="Normal Standard: BHR Power", y = "")
+NSP.BRU <- NSt %>% filter(BRU.Power!=0) %>% ggplot(aes(x = Timestamp, y = BRU.Power))+ geom_jitter(color = "slategrey", alpha = 0.36, shape = 21, size = 1.5)+xlim(0,16)+ylim(-23000,30000)+theme_minimal()+labs(x = "", subtitle ="Normal Standard: BRU Power", y = "")
+
+NOP.BLO <- NOp %>% filter(BLO.Power!=0) %>% ggplot(aes(x = Timestamp, y = BLO.Power))+geom_jitter(color = "royalblue", alpha = 0.36, shape = 21, size = 1.5)+xlim(0,16)+ylim(-22000,28000)+theme_minimal()+labs(x = "", subtitle ="Normal Optimized: BLO Power", y = "")
+NOP.BHL <- NOp %>% filter(BHL.Power!=0) %>% ggplot(aes(x = Timestamp, y = BHL.Power))+geom_jitter(color = "orangered", alpha = 0.36, shape = 21, size = 1.5)+xlim(0,16)+ylim(-32000,33000)+theme_minimal()+labs(x = "", subtitle ="Normal Optimized: BHL Power", y = "")
+NOP.BHR <- NOp %>% filter(BHR.Power!=0) %>% ggplot(aes(x = Timestamp, y = BHR.Power))+geom_jitter(color = "maroon", alpha = 0.36, shape = 21, size = 1.5)+xlim(0,16)+ylim(-32000,33000)+theme_minimal()+labs(x = "", subtitle ="Normal Optimized: BHR Power", y = "")
+NOP.BRU <- NOp %>% filter(BRU.Power!=0) %>% ggplot(aes(x = Timestamp, y = BRU.Power))+geom_jitter(color = "slategrey", alpha = 0.36, shape = 21, size = 1.5)+xlim(0,16)+ylim(-23000,30000)+theme_minimal()+labs(x = "", subtitle ="Normal Optimized: BRU Power", y = "")
+
+ASP.BLO <- ASt %>% filter(BLO.Power!=0) %>% ggplot(aes(x = Timestamp, y = BLO.Power))+ geom_jitter(color = "royalblue", alpha = 0.36, shape = 21, size = 1.5)+xlim(0,19)+ylim(-26000,27000)+theme_minimal()+labs(x = "", subtitle ="Anomalous Standard: BLO Power", y = "")
+ASP.BHL <- ASt %>% filter(BHL.Power!=0) %>% ggplot(aes(x = Timestamp, y = BHL.Power))+ geom_jitter(color = "orangered", alpha = 0.36, shape = 21, size = 1.5)+xlim(0,19)+ylim(-40000,38000)+theme_minimal()+labs(x = "", subtitle ="Anomalous Standard: BHL Power", y = "")
+ASP.BHR <- ASt %>% filter(BHR.Power!=0) %>% ggplot(aes(x = Timestamp, y = BHR.Power))+ geom_jitter(color = "maroon", alpha = 0.36, shape = 21, size = 1.5)+xlim(0,19)+ylim(-40000,42000)+theme_minimal()+labs(x = "", subtitle ="Anomalous Standard: BHR Power", y = "")
+ASP.BRU <- ASt %>% filter(BRU.Power!=0) %>% ggplot(aes(x = Timestamp, y = BRU.Power))+ geom_jitter(color = "slategrey", alpha = 0.36, shape = 21, size = 1.5)+xlim(0,19)+ylim(-24000,30000)+theme_minimal()+labs(x = "", subtitle ="Anomalous Standard: BRU Power", y = "")
+
+AOP.BLO <- AOp %>% filter(BLO.Power!=0) %>% ggplot(aes(x = Timestamp, y = BLO.Power))+geom_jitter(color = "royalblue", alpha = 0.36, shape = 21, size = 1.5)+xlim(0,19)+ylim(-26000,27000)+theme_minimal()+labs(x = "", subtitle ="Anomalous Optimized: BLO Power", y = "")
+AOP.BHL <- AOp %>% filter(BHL.Power!=0) %>% ggplot(aes(x = Timestamp, y = BHL.Power))+geom_jitter(color = "orangered", alpha = 0.36, shape = 21, size = 1.5)+xlim(0,19)+ylim(-40000,38000)+theme_minimal()+labs(x = "", subtitle ="Anomalous Optimized: BHL Power", y = "")
+AOP.BHR <- AOp %>% filter(BHR.Power!=0) %>% ggplot(aes(x = Timestamp, y = BHR.Power))+geom_jitter(color = "maroon", alpha = 0.36, shape = 21, size = 1.5)+xlim(0,19)+ylim(-40000,42000)+theme_minimal()+labs(x = "", subtitle ="Anomalous Optimized: BHR Power", y = "")
+AOP.BRU <- AOp %>% filter(BRU.Power!=0) %>% ggplot(aes(x = Timestamp, y = BRU.Power))+geom_jitter(color = "slategrey", alpha = 0.36, shape = 21, size = 1.5)+xlim(0,19)+ylim(-24000,30000)+theme_minimal()+labs(x = "", subtitle ="Anomalous Optimized: BRU Power", y = "")
+```
+
+#### ∆ Power: Normal data [Belts] - Standard vs Optimized
+
+Normal Standard and Normal Optimized data's ∆ Power vs Timestamp variables were juxtaposed. As is in graph below, the utilization of power by any conveyor is in coherence with when that specific conveyor would run in one its given cycle.
+
+```{r, warning=FALSE, message=FALSE}
+grid.arrange(NSP.BLO, NOP.BLO, NSP.BHL, NOP.BHL, NSP.BHR, NOP.BHR, NSP.BRU, NOP.BRU, ncol = 2, top = "Normal data: Power variation vs Continuous Time", left = "Power Variations (both increase & decrease)", bottom = "Timestamp (seconds)")
+```
+
+#### ∆ Power: Anomalous data [Belts] - Standard vs Optimized
+
+Anomalous Standard and Anomalous Optimized data's ∆ Power vs Timestamp variables were juxtaposed. As is in graph below, the utilization of power by any conveyor is in coherence with when that specific conveyor would run in one its given cycle.
+
+```{r, warning=FALSE, message=FALSE}
+grid.arrange(ASP.BLO, AOP.BLO, ASP.BHL, AOP.BHL, ASP.BHR, AOP.BHR, ASP.BRU, AOP.BRU, ncol = 2, top = "Anomalous data: Power variation vs Continuous Time", left = "Power Variations (both increase & decrease)", bottom = "Timestamp (seconds)")
+```
+
+#### ∆ Power: Standard data [Belts] - Normal vs Anomalous
+
+Normal Standard and Anomalous Standard data's ∆ Power vs Timestamp variables were juxtaposed. As is in graph below, the utilization of power by any conveyor is in coherence with when that specific conveyor would run in one its given cycle. Data in Anomalous set is more jittery that Normal data set's.
+
+```{r, warning=FALSE, message=FALSE}
+grid.arrange(NSP.BLO, ASP.BLO, NSP.BHL, ASP.BHL, NSP.BHR, ASP.BHR, NSP.BRU, ASP.BRU, ncol = 2, top = "Standard data [Normal vs Anomalous]: Power variation vs Continuous Time", left = "Power Variations (both increase & decrease)", bottom = "Timestamp (seconds)")
+```
+
+#### ∆ Power: Optimized data [Belts] - Normal vs Anomalous
+
+Normal Standard and Anomalous Optimized data's ∆ Power vs Timestamp variables were juxtaposed. As is in graph below, the utilization of power by any conveyor is in coherence with when that specific conveyor would run in one its given cycle. Data in Anomalous sets is more jittery that Normal data sets'.
+
+```{r, warning=FALSE, message=FALSE}
+grid.arrange(NOP.BLO, AOP.BLO, NOP.BHL, AOP.BHL, NOP.BHR, AOP.BHR, NOP.BRU, AOP.BRU, ncol = 2, top = "Optmized data [Normal vs Anomalous]: Power variation vs Continuous Time", left = "Power Variations (both increase & decrease)", bottom = "Timestamp (seconds)")
+```
+
+## Voltage {.tabset .tabset-fade .tabset-pills}
+
+Voltage and Power are directly related. Ohms Law of electrical circuits. Voltage variations are presented in contour form see it's behavior pattern.   
+
+```{r, warning=FALSE, message=FALSE}
+NSV.BLO <- NSt %>% ggplot(aes(x = Timestamp, y = Voltage.BLO))+ geom_density2d(color = "royalblue", alpha = 0.63)+xlim(0,16)+ylim(0,62)+theme_minimal()+labs(x = "", subtitle ="Normal Standard: BLO Voltage", y = "")
+NSV.BHL <- NSt %>% ggplot(aes(x = Timestamp, y = Voltage.BHL))+ geom_density2d(color = "orangered", alpha = 0.63)+xlim(0,16)+ylim(0,105)+theme_minimal()+labs(x = "", subtitle ="Normal Standard: BHL Voltage", y = "")
+NSV.BHR <- NSt %>% ggplot(aes(x = Timestamp, y = Voltage.BHR))+ geom_density2d(color = "maroon", alpha = 0.63)+xlim(0,16)+ylim(0,105)+theme_minimal()+labs(x = "", subtitle ="Normal Standard: BHR Voltage", y = "")
+NSV.BRU <- NSt %>% ggplot(aes(x = Timestamp, y = Voltage.BRU))+ geom_density2d(color = "slategrey", alpha = 0.63)+xlim(0,16)+ylim(0,62)+theme_minimal()+labs(x = "", subtitle ="Normal Standard: BRU Voltage", y = "")
+
+NOV.BLO <- NOp %>% ggplot(aes(x = Timestamp, y = Voltage.BLO))+ geom_density2d(color = "royalblue", alpha = 0.63)+xlim(0,16)+ylim(0,62)+theme_minimal()+labs(x = "", subtitle ="Normal Optimized: BLO Voltage", y = "")
+NOV.BHL <- NOp %>% ggplot(aes(x = Timestamp, y = Voltage.BHL))+geom_density2d(color = "orangered", alpha = 0.63)+xlim(0,16)+ylim(0,105)+theme_minimal()+labs(x = "", subtitle ="Normal Optimized: BHL Voltage", y = "")
+NOV.BHR <- NOp %>% ggplot(aes(x = Timestamp, y = Voltage.BHR))+geom_density2d(color = "maroon", alpha = 0.63)+xlim(0,16)+ylim(0,105)+theme_minimal()+labs(x = "", subtitle ="Normal Optimized: BHR Voltage", y = "")
+NOV.BRU <- NOp %>% ggplot(aes(x = Timestamp, y = Voltage.BRU))+geom_density2d(color = "slategrey", alpha = 0.63)+xlim(0,16)+ylim(0,62)+theme_minimal()+labs(x = "", subtitle ="Normal Optimized: BRU Voltage", y = "")
+
+ASV.BLO <- ASt %>% ggplot(aes(x = Timestamp, y = Voltage.BLO))+ geom_density2d(color = "royalblue", alpha = 0.63)+xlim(0,19)+theme_minimal()+labs(x = "", subtitle ="Anomalous Standard: BLO Voltage", y = "")
+ASV.BHL <- ASt %>% ggplot(aes(x = Timestamp, y = Voltage.BHL))+ geom_density2d(color = "orangered", alpha = 0.63)+xlim(0,19)+theme_minimal()+labs(x = "", subtitle ="Anomalous Standard: BHL Voltage", y = "")
+ASV.BHR <- ASt %>% ggplot(aes(x = Timestamp, y = Voltage.BHR))+ geom_density2d(color = "maroon", alpha = 0.63)+xlim(0,19)+theme_minimal()+labs(x = "", subtitle ="Anomalous Standard: BHR Voltage", y = "")
+ASV.BRU <- ASt %>% ggplot(aes(x = Timestamp, y = Voltage.BRU))+ geom_density2d(color = "slategrey", alpha = 0.63)+xlim(0,19)+theme_minimal()+labs(x = "", subtitle ="Anomalous Standard: BRU Voltage", y = "")
+
+AOV.BLO <- AOp %>% ggplot(aes(x = Timestamp, y = Voltage.BLO))+ geom_density2d(color = "royalblue", alpha = 0.63)+xlim(0,19)+theme_minimal()+labs(x = "", subtitle ="Anomalous Optimized: BLO Voltage", y = "")
+AOV.BHL <- AOp %>% ggplot(aes(x = Timestamp, y = Voltage.BHL))+geom_density2d(color = "orangered", alpha = 0.63)+xlim(0,19)+theme_minimal()+labs(x = "", subtitle ="Anomalous Optimized: BHL Voltage", y = "")
+AOV.BHR <- AOp %>% ggplot(aes(x = Timestamp, y = Voltage.BHR))+geom_density2d(color = "maroon", alpha = 0.63)+xlim(0,19)+theme_minimal()+labs(x = "", subtitle ="Anomalous Optimized: BHR Voltage", y = "")
+AOV.BRU <- AOp %>% ggplot(aes(x = Timestamp, y = Voltage.BRU))+geom_density2d(color = "slategrey", alpha = 0.63)+xlim(0,19)+theme_minimal()+labs(x = "", subtitle ="Anomalous Optimized: BRU Voltage", y = "")
+```
+
+### ∆ Voltage: Normal data [Belts] - Standard vs Optimized
+
+Normal Standard and Normal Optimized data's ∆ Voltage vs Timestamp variables were juxtaposed. As is in graph below, the variations in voltage shows same behavior as that of power and physical movement of an object on conveyor - in it's given cycle.
+
+```{r, warning=FALSE, message=FALSE}
+grid.arrange(NSV.BLO, NOV.BLO, NSV.BHL, NOV.BHL, NSV.BHR, NOV.BHR, NSV.BRU, NOV.BRU, ncol = 2, top = "Conveyor Belts (normal data): Voltage distribution on continuous Time scale", left= "Voltage", bottom= "Timestamp (seconds)")
+```
+
+### ∆ Voltage: Anomalous data [Belts] - Standard vs Optimized
+
+Anomalous Standard and Anomalous Optimized data's ∆ Voltage vs Timestamp variables were juxtaposed. As is in graph below, the variations in voltage shows same behavior as that of power and physical movement of an object on conveyor - in it's given cycle.
+
+```{r, warning=FALSE, message=FALSE}
+grid.arrange(ASV.BLO, AOV.BLO, ASV.BHL, AOV.BHL, ASV.BHR, AOV.BHR, ASV.BRU, AOV.BRU, ncol = 2, top = "Conveyor Belts (anomalous data): Voltage distribution on continuous Time scale", left= "Voltage", bottom= "Timestamp (seconds)")
+```
+
+### ∆ Voltage: Standard data [Belts] - Normal vs Anomalous
+
+Normal Standard and Anomalous Standard data's ∆ Voltage vs Timestamp variables were juxtaposed. As is in graph below, the variations in voltage shows same behavior as that of power and physical movement of an object on conveyor - in it's given cycle.
+
+```{r, warning=FALSE, message=FALSE}
+grid.arrange(NSV.BLO, ASV.BLO, NSV.BHL, ASV.BHL, NSV.BHR, ASV.BHR, NSV.BRU, ASV.BRU, ncol = 2, top = "Conveyor Belts - Standard data [normal vs anomalous]: Voltage distribution on continuous Time scale", left= "Voltage", bottom= "Timestamp (seconds)")
+```
+
+### ∆ Voltage: Optimized data [Belts] - Normal vs Anomalous
+
+Normal Optimized and Anomalous Optimized data's ∆ Voltage vs Timestamp variables were juxtaposed. As is in graph below, the variations in voltage shows same behavior as that of power and physical movement of an object on conveyor - in it's given cycle.
+
+```{r, message=FALSE, warning=FALSE}
+grid.arrange(NOV.BLO, AOV.BLO, NOV.BHL, AOV.BHL, NOV.BHR, AOV.BHR, NOV.BRU, AOV.BRU, ncol = 2, top = "Conveyor Belts - Optimized data [normal vs anomalous]: Voltage distribution on continuous Time scale", left= "Voltage", bottom= "Timestamp (seconds)")
+```
+
+## Timestamp and Labels
+
+Timestamp: Timestamp is in seconds. It starts at 0.0 seconds (*recorded at up to eight decimal places*) and ends anywhere between 15.0 seconds to 16.0 seconds. That said, each cycle has time duration of 15-16 seconds & there are repetitions of cycles. These repetitions can be of 107 cycles if it's a Standard version data or 111 cycles if it's an Optimized version data set. OR we may say — as if it’s a 15-16 seconds film caption  repeated either 107 times or 111 times or more.
+
+Labels: If categorical value is '1' then it is an anomaly else '0'. The values of this variable distinguishes between Normal and Anomalous data sets.
+
+# Relationships
+
+In HRSS demonstrator couple of conveyors are relying on rails for vertical movement of objects. This occurrence of physical coordination within sub-systems to optimize total energy may show some different behaviors and underlying models.     
+
+## Data: Correlations {.tabset .tabset-fade .tabset-pills}
+
+Correlation of data sets.  
+
+### Normal Standard: Correlation Plot
+
+In Normal Standard data's correlation: 
+
+1. Voltage is positively and strongly correlated to Power for all the conveyors but not the rails.
+2. Distance variables of Conveyor and Rail combination are negatively correlated.
+3. Distance variable of both rails are positively and strongly correlated.
+4. Distance variable of all conveyors can be both positively or negatively correlated to their Powers.
+
+```{r, warning=FALSE, message=FALSE}
+par(mfrow=c(1,2))
+corrplot(cor(NSt.2[,-2]), tl.cex = 0.60, order = "alphabet", method = "circle", diag = FALSE, title = "Normal Standard", insig = "blank", sig.level = 0.01)
+corrplot(cor(NSt.2[,-2]), type = "lower",tl.cex = 0.6, order = "alphabet", method = "number", number.cex = 0.65, diag = FALSE, title = "Normal Standard", cl.pos = "b", insig = "blank", sig.level = 0.01)
+```
+
+### Normal Optmized: Correlation Plot
+
+In Normal Optimized data's correlation: 
+
+1. Voltage is positively and strongly correlated to Power for all the conveyors but not the rails.
+2. Distance variables of Conveyor and Rail combination are strongly negatively correlated.
+3. Distance variable of both rails are positively and strongly correlated.
+4. Distance variable of all conveyors can be both positively or negatively correlated to their Powers.
+
+```{r, warning=FALSE, message=FALSE}
+par(mfrow=c(1,2))
+corrplot(cor(NOp.2[,-2]), tl.cex = 0.60, order = "alphabet", method = "circle", diag = FALSE, title = "Normal Optimised", insig = "blank", sig.level = 0.01)
+corrplot(cor(NOp.2[,-2]), type = "lower",tl.cex = 0.6, order = "alphabet", method = "number", number.cex = 0.65, diag = FALSE, title = "Normal Optimized", cl.pos = "b", insig = "blank", sig.level = 0.01)
+```
+
+### Anomalous Standard: Correlation Plot
+
+In Anomalous Standard data's correlation: 
+
+1. Voltage is positively and strongly correlated to Power for all the conveyors but not the rails.
+2. Distance variables of Conveyor and Rail combination are strongly negatively correlated.
+3. Distance variable of both rails are positively and strongly correlated.
+4. Distance variable of all conveyors can be both positively or negatively correlated to their Powers.
+
+```{r, warning=FALSE, message=FALSE}
+par(mfrow=c(1,2))
+corrplot(cor(ASt.2[,-2]), tl.cex = 0.60, order = "alphabet", method = "circle", diag = FALSE, title = "Anomalous Standard", insig = "blank", sig.level = 0.01)
+corrplot(cor(ASt.2[,-2]), type = "lower",tl.cex = 0.6, order = "alphabet", method = "number", number.cex = 0.65, diag = FALSE, title = "Anomalous Standard", cl.pos = "b", insig = "blank", sig.level = 0.01)
+```
+
+### Anomalous Optimized: Correlation Plot
+
+In Anomalous Optimized data's correlation: 
+
+1. Voltage is positively correlated to Power for all the conveyors but not the rails.
+2. Distance variables of Conveyor and Rail combination are strongly negatively correlated.
+3. Distance variable of both rails are positively and strongly correlated.
+4. Distance variable of all conveyors can be both positively or negatively correlated to their Powers.
+
+```{r, warning=FALSE, message=FALSE}
+par(mfrow=c(1,2))
+corrplot(cor(AOp.2[,-2]), tl.cex = 0.60, order = "alphabet", method = "circle", diag = FALSE, title = "Anomalous Optimised", insig = "blank", sig.level = 0.01)
+corrplot(cor(AOp.2[,-2]), type = "lower",tl.cex = 0.6, order = "alphabet", method = "number", number.cex = 0.65, diag = FALSE, title = "Anomalous Optimized", cl.pos = "b", insig = "blank", sig.level = 0.01)
+```
+
+## Physical Systems: Conveyor and Rails {.tabset .tabset-fade .tabset-pills}
+
+Conveyors BHL & BHR are linked to rails HL & HR. This combination or how they generate data can be seen in the graph below. ∆ Powers of both the conveyors are taken less than ZERO. This will look into the cases where Power of conveyors are increasing as it climbs the height with the help of rails. 
+
+```{r, warning=FALSE, message=FALSE}
+NSHL.P <- NSt %>% filter(BHL.Power <0) %>% ggplot(aes(y = Weg.HL, x = BHL.Power))+geom_jitter(alpha = 0.27, color = "red")+labs(y = "HL rail", x = "BHL conveyor", subtitle ="Normal Standard")+scale_y_reverse()+theme_light()
+NSHR.P <- NSt %>% filter(BHR.Power <0) %>% ggplot(aes(y = Weg.HR, x = BHR.Power))+geom_jitter(alpha = 0.27, color = "slateblue")+labs(y = "HR rail", x = "BHR conveyor", subtitle ="Normal Standard")+scale_y_reverse()+theme_light()
+NOHL.P <- NOp %>% filter(BHL.Power <0) %>% ggplot(aes(y = Weg.HL, x = BHL.Power))+geom_jitter(alpha = 0.27, color = "red")+labs(y = "HL rail", x = "BHL conveyor", subtitle ="Normal Optimized")+scale_y_reverse()+theme_light()
+NOHR.P <- NOp %>% filter(BHR.Power <0) %>% ggplot(aes(y = Weg.HR, x = BHR.Power))+geom_jitter(alpha = 0.27, color = "slateblue")+labs(y = "HR rail", x = "BHR conveyor", subtitle ="Normal Optimized")+scale_y_reverse()+theme_light()
+
+ASHL.P <- ASt %>% filter(BHL.Power <0) %>% ggplot(aes(y = Weg.HL, x = BHL.Power))+geom_jitter(alpha = 0.27, color = "red")+labs(y = "HL rail", x = "BHL conveyor", subtitle ="Anomalous Standard")+scale_y_reverse()+theme_light()
+ASHR.P <- ASt %>% filter(BHR.Power <0) %>% ggplot(aes(y = Weg.HR, x = BHR.Power))+geom_jitter(alpha = 0.27, color = "slateblue")+labs(y = "HR rail", x = "BHR conveyor", subtitle ="Anomalous Standard")+scale_y_reverse()+theme_light()
+AOHL.P <- AOp %>% filter(BHL.Power <0) %>% ggplot(aes(y = Weg.HL, x = BHL.Power))+geom_jitter(alpha = 0.27, color = "red")+labs(y = "HL rail", x = "BHL conveyor", subtitle ="Anomalous Optimized")+scale_y_reverse()+theme_light()
+AOHR.P <- AOp %>% filter(BHR.Power <0) %>% ggplot(aes(y = Weg.HR, x = BHR.Power))+geom_jitter(alpha = 0.27, color = "slateblue")+labs(y = "HR rail", x = "BHR conveyor", subtitle ="Anomalous Optimized")+scale_y_reverse()+theme_light()
+```
+
+### Normal data: Standard vs Optmized
+
+Normal Standard: First rail HR does work to help climb the system and then rail HL does.
+Normal Optimized: First rail HL does work to help climb the system and then rail HR does. 
+
+But, Normal Optimized data for conveyor and rail combination is relative more jittery than the Normal Standard's data.
+
+```{r, warning=FALSE, message=FALSE}
+grid.arrange(NSHL.P, NOHL.P, NSHR.P, NOHR.P, ncol = 2, top = "Conveyor Belts to vertical Rails", left= "Rails distance in mm (negative: as it goes up)", bottom= "Conveyor Belts' power decrements")
+```
+
+### Anomalous data: Standard vs Optmized
+
+Anomalous Standard: First rail HR does work to help climb the system and then rail HL does.
+Anomalous Optimized: First rail HL does work to help climb the system and then rail HR does. 
+
+But, Anomalous Optimized data for conveyor and rail combination is relative more jittery than the Anomalous Standard's data.
+
+```{r, warning=FALSE, message=FALSE}
+grid.arrange(ASHL.P, AOHL.P, ASHR.P, AOHR.P, ncol = 2, top = "Conveyor Belts to vertical Rails", left= "Rails distance in mm (negative: as it goes up)", bottom= "Conveyor Belts' power decrements")
+```
+
+### Standard data: Normal vs Anomalous
+
+In both Normal Standard and Anomalous Standard: First rail HR does work to help climb the system and then rail HL does.
+
+But, in Anomalous Standard data the height raised of the system is greater than Normal Standard data's.
+
+```{r, warning=FALSE, message=FALSE}
+grid.arrange(NSHL.P, ASHL.P, NSHR.P, ASHR.P, ncol = 2, top = "Conveyor Belts to vertical Rails", left= "Rails distance in mm (negative: as it goes up)", bottom= "Conveyor Belts' power decrements")
+```
+
+### Optimized data: Normal vs Anomalous
+
+In both Normal Optimized and Anomalous Optimized: First rail HL does work to help climb the system and then rail HR does. Apparently, data is equally jittery.
+
+But, in Anomalous Optimized data the height raised of the system is greater than Normal Optimized data.
+
+```{r, warning=FALSE, message=FALSE}
+grid.arrange(NOHL.P, AOHL.P, NOHR.P, AOHR.P, ncol = 2, top = "Conveyor Belts to vertical Rails", left= "Rails distance in mm (negative: as it goes up)", bottom= "Conveyor Belts' power decrements")
+```
+
+# Cycles': Means + Standard Deviations
+
+In this section, Number of Cycles per data set takes precedence. I created new data sets. Each data set has same original data set + Total Power as variables, but every value stated in these tables is it's mean per cycle and standard deviation per cycle.
+
+This is very naive approach to understand something that is as complex as these data sets. Especially knowing the fact; the Weg variable for conveyors may have both positive and negative recorded values and they'll cancel out and true picture won't emerge. On the other hand, Power and Voltage variables may show some insights (*on humorous note: it's still exploration phase*).
+
+```{r, warning=FALSE, message=FALSE}
+meanNSt <- NSt.2 %>% group_by(CyN)%>% summarise_all(funs(mean))
+sdNSt<- NSt.2 %>% group_by(CyN)%>% summarise_all(funs(sd))
+nNSt <- full_join(meanNSt, sdNSt, by = "CyN")
+rm(meanNSt, sdNSt)
+
+meanNOp <- NOp.2 %>% group_by(CyN)%>% summarise_all(funs(mean))
+sdNOp<- NOp.2 %>% group_by(CyN)%>% summarise_all(funs(sd))
+nNOp <- full_join(meanNOp, sdNOp, by = "CyN")
+rm(meanNOp, sdNOp)
+
+meanASt <- ASt.2 %>% group_by(CyN)%>% summarise_all(funs(mean))
+sdASt<- ASt.2 %>% group_by(CyN)%>% summarise_all(funs(sd))
+nASt <- full_join(meanASt, sdASt, by = "CyN")
+rm(meanASt, sdASt)
+
+meanAOp <- AOp.2 %>% group_by(CyN)%>% summarise_all(funs(mean))
+sdAOp<- AOp.2 %>% group_by(CyN)%>% summarise_all(funs(sd))
+nAOp <- full_join(meanAOp, sdAOp, by = "CyN")
+rm(meanAOp, sdAOp)
+```
+
+## Power {.tabset .tabset-fade .tabset-pills}
+
+Power plays again - this time at Cycle Number level. Let's see how the marker's dance?
+
+### Power variations: Normal Standard data
+
+Conveyor or Rail | Mean(Max)| Mean(Min)| σ (Max)  | σ (Min)   
+-----------------|----------|----------|----------|----------
+    Power BLO    |    5430  |       0  |    9754  |   8379
+    Power BHL    |    7685  |      25  |   11154  |   9450
+    Power BHR    |    6780  |       0  |    9676  |   8450
+    Power BRU    |    8720  |    4403  |   10126  |   8733
+    Power  HL    |   14629  |   10756  |    8902  |   6981
+    Power  HR    |   12884  |    5972  |    8042  |   5519
+
+```{r, warning=FALSE, message=FALSE}
+nNSt %>% plot_ly(type = 'scatter', mode = 'markers', marker=list(size=~23, opacity=0.63,symbol = I(16))) %>% 
+  add_markers(x= ~Power.BLO.x, y= ~Power.BLO.y, frame= ~CyN, name = "BLO") %>% 
+  add_markers(x= ~Power.BHL.x, y= ~Power.BHL.y, frame= ~CyN, name = "BHL") %>% 
+  add_markers(x= ~Power.BHR.x, y= ~Power.BHR.y, frame= ~CyN, name = "BHR") %>% 
+  add_markers(x= ~Power.BRU.x, y= ~Power.BRU.y, frame= ~CyN, name = "BRU") %>% 
+  add_markers(x= ~Power.HL.x, y= ~Power.HL.y, frame= ~CyN, name = "HL") %>% 
+  add_markers(x= ~Power.HR.x, y= ~Power.HR.y, frame= ~CyN, name = "HR") %>% 
+  animation_opts(frame = 1000) %>% 
+  animation_slider(currentvalue = list(prefix = "Cycle Number: ", font = list(color="royalblue"))) %>%
+  layout(title = "POWER: Mean to Standard Deviation", xaxis = list(title ='x = Mean/cycle'), yaxis = list(title ='y = Standard Deviation/cycle'))
+```
+
+### Power variations: Normal Optimized data
+
+Conveyor or Rail | Mean(Max)| Mean(Min)| σ (Max)  | σ (Min)   
+-----------------|----------|----------|----------|----------
+    Power BLO    |    5920  |    4980  |    9262  |   7863
+    Power BHL    |    5383  |    2965  |    9041  |   5322
+    Power BHR    |    5663  |    3348  |    9358  |   5229
+    Power BRU    |    7212  |    5816  |    9998  |   8587
+    Power  HL    |   14788  |   10698  |    9261  |   6028
+    Power  HR    |   14822  |    8132  |    8029  |   4637
+
+```{r, warning=FALSE, message=FALSE}
+nNOp %>% plot_ly(type = 'scatter', mode = 'markers', marker=list(size=~23, opacity=0.63,symbol = I(16))) %>% 
+  add_markers(x= ~Power.BLO.x, y= ~Power.BLO.y, frame= ~CyN, name = "BLO") %>% 
+  add_markers(x= ~Power.BHL.x, y= ~Power.BHL.y, frame= ~CyN, name = "BHL") %>% 
+  add_markers(x= ~Power.BHR.x, y= ~Power.BHR.y, frame= ~CyN, name = "BHR") %>% 
+  add_markers(x= ~Power.BRU.x, y= ~Power.BRU.y, frame= ~CyN, name = "BRU") %>% 
+  add_markers(x= ~Power.HL.x, y= ~Power.HL.y, frame= ~CyN, name = "HL") %>% 
+  add_markers(x= ~Power.HR.x, y= ~Power.HR.y, frame= ~CyN, name = "HR") %>% 
+  animation_opts(frame = 1000) %>% 
+  animation_slider(currentvalue = list(prefix = "Cycle Number: ", font = list(color="royalblue"))) %>%
+  layout(title = "POWER: Mean to Standard Deviation", xaxis = list(title ='x = Mean/cycle'), yaxis = list(title ='y = Standard Deviation/cycle'))
+```
+
+### Power variations: Anomalous Standard data
+
+Conveyor or Rail | Mean(Max)| Mean(Min)| σ (Max)  | σ (Min)   
+-----------------|----------|----------|----------|----------
+    Power BLO    |    7867  |       0  |   13124  |      0
+    Power BHL    |    9196  |       0  |   11515  |      0
+    Power BHR    |   11301  |       0  |   10426  |      0
+    Power BRU    |   14093  |       0  |   11034  |      0
+    Power  HL    |   16442  |       0  |   11001  |      0
+    Power  HR    |   15486  |       0  |    9872  |      0
+
+```{r, warning=FALSE, message=FALSE}
+nASt %>% plot_ly(type = 'scatter', mode = 'markers', marker=list(size=~23, opacity=0.63,symbol = I(16))) %>% 
+  add_markers(x= ~Power.BLO.x, y= ~Power.BLO.y, frame= ~CyN, name = "BLO") %>% 
+  add_markers(x= ~Power.BHL.x, y= ~Power.BHL.y, frame= ~CyN, name = "BHL") %>% 
+  add_markers(x= ~Power.BHR.x, y= ~Power.BHR.y, frame= ~CyN, name = "BHR") %>% 
+  add_markers(x= ~Power.BRU.x, y= ~Power.BRU.y, frame= ~CyN, name = "BRU") %>% 
+  add_markers(x= ~Power.HL.x, y= ~Power.HL.y, frame= ~CyN, name = "HL") %>% 
+  add_markers(x= ~Power.HR.x, y= ~Power.HR.y, frame= ~CyN, name = "HR") %>% 
+  animation_opts(frame = 1000) %>% 
+  animation_slider(currentvalue = list(prefix = "Cycle Number: ", font = list(color="royalblue"))) %>%
+  layout(title = "POWER: Mean to Standard Deviation", xaxis = list(title ='x = Mean/cycle'), yaxis = list(title ='y = Standard Deviation/cycle'))
+```
+
+### Power variations: Anomalous Optimized data
+
+Conveyor or Rail | Mean(Max)| Mean(Min)| σ (Max)  | σ (Min)   
+-----------------|----------|----------|----------|----------
+    Power BLO    |    7574  |       0  |   11332  |      0
+    Power BHL    |    7725  |       0  |   11486  |      0
+    Power BHR    |    8664  |       0  |   10901  |      0
+    Power BRU    |   19777  |    3352  |   10881  |   3267
+    Power  HL    |   16122  |    2167  |   10434  |    740
+    Power  HR    |   15792  |    2215  |    8806  |   2371
+
+```{r, warning=FALSE, message=FALSE}
+nAOp %>% plot_ly(type = 'scatter', mode = 'markers', marker=list(size=~23, opacity=0.63,symbol = I(16))) %>% 
+  add_markers(x= ~Power.BLO.x, y= ~Power.BLO.y, frame= ~CyN, name = "BLO") %>% 
+  add_markers(x= ~Power.BHL.x, y= ~Power.BHL.y, frame= ~CyN, name = "BHL") %>% 
+  add_markers(x= ~Power.BHR.x, y= ~Power.BHR.y, frame= ~CyN, name = "BHR") %>% 
+  add_markers(x= ~Power.BRU.x, y= ~Power.BRU.y, frame= ~CyN, name = "BRU") %>% 
+  add_markers(x= ~Power.HL.x, y= ~Power.HL.y, frame= ~CyN, name = "HL") %>% 
+  add_markers(x= ~Power.HR.x, y= ~Power.HR.y, frame= ~CyN, name = "HR") %>% 
+  animation_opts(frame = 1000) %>% 
+  animation_slider(currentvalue = list(prefix = "Cycle Number: ", font = list(color="royalblue"))) %>%
+  layout(title = "POWER: Mean to Standard Deviation", xaxis = list(title ='x = Mean/cycle'), yaxis = list(title ='y = Standard Deviation/cycle'))
+```
+
+## Voltage {.tabset .tabset-fade .tabset-pills}
+
+### Voltage variations: Normal Standard data
+
+Conveyor or Rail | Mean(Max)| Mean(Min)| σ (Max)  | σ (Min)   
+-----------------|----------|----------|----------|----------
+  Voltage BLO    |   13.66  |    0.00  |   23.23  |   21.92
+  Voltage BHL    |   19.50  |    1.00  |   26.11  |   24.80
+  Voltage BHR    |   18.84  |    0.00  |   25.67  |   24.43
+  Voltage BRU    |   39.00  |   12.07  |   24.15  |   21.42
+  Voltage  HL    |   54.24  |   26.00  |   96.09  |   75.40
+  Voltage  HR    |   54.79  |   26.00  |   97.92  |   76.01
+
+```{r, warning=FALSE, message=FALSE}
+nNSt %>% plot_ly(type = 'scatter', mode = 'markers', marker=list(size=~23, opacity=0.63,symbol = I(21))) %>% 
+  add_markers(x= ~Voltage.BLO.x, y= ~Voltage.BLO.y, frame= ~CyN, name = "BLO") %>% 
+  add_markers(x= ~Voltage.BHL.x, y= ~Voltage.BHL.y, frame= ~CyN, name = "BHL") %>% 
+  add_markers(x= ~Voltage.BHR.x, y= ~Voltage.BHR.y, frame= ~CyN, name = "BHR") %>% 
+  add_markers(x= ~Voltage.BRU.x, y= ~Voltage.BRU.y, frame= ~CyN, name = "BRU") %>% 
+  add_markers(x= ~Voltage.HL.x, y= ~Voltage.HL.y, frame= ~CyN, name = "HL") %>% 
+  add_markers(x= ~Voltage.HR.x, y= ~Voltage.HR.y, frame= ~CyN, name = "HR") %>% 
+  animation_opts(frame = 1000) %>% 
+  animation_slider(currentvalue = list(prefix = "Cycle Number: ", font = list(color="royalblue"))) %>%
+  layout(title = "VOLTAGE: Mean to Standard Deviation", xaxis = list(title ='x = Mean/cycle'), yaxis = list(title ='y = Standard Deviation/cycle'))
+```
+
+### Voltage variations: Normal Optimized data
+
+Conveyor or Rail | Mean(Max)| Mean(Min)| σ (Max)  | σ (Min)   
+-----------------|----------|----------|----------|----------
+  Voltage BLO    |   15.90  |   13.90  |   22.54  |   21.06
+  Voltage BHL    |   22.71  |   19.72  |   36.63  |   33.23
+  Voltage BHR    |   27.21  |   23.24  |   37.43  |   34.96
+  Voltage BRU    |   18.95  |   15.67  |   24.41  |   22.51
+  Voltage  HL    |   55.21  |   50.41  |   62.42  |   54.91
+  Voltage  HR    |   55.42  |   50.32  |   62.87  |   54.80
+
+```{r, warning=FALSE, message=FALSE}
+nNOp %>% plot_ly(type = 'scatter', mode = 'markers', marker=list(size=~23, opacity=0.63,symbol = I(21))) %>% 
+  add_markers(x= ~Voltage.BLO.x, y= ~Voltage.BLO.y, frame= ~CyN, name = "BLO") %>% 
+  add_markers(x= ~Voltage.BHL.x, y= ~Voltage.BHL.y, frame= ~CyN, name = "BHL") %>% 
+  add_markers(x= ~Voltage.BHR.x, y= ~Voltage.BHR.y, frame= ~CyN, name = "BHR") %>% 
+  add_markers(x= ~Voltage.BRU.x, y= ~Voltage.BRU.y, frame= ~CyN, name = "BRU") %>% 
+  add_markers(x= ~Voltage.HL.x, y= ~Voltage.HL.y, frame= ~CyN, name = "HL") %>% 
+  add_markers(x= ~Voltage.HR.x, y= ~Voltage.HR.y, frame= ~CyN, name = "HR") %>% 
+  animation_opts(frame = 1000) %>% 
+  animation_slider(currentvalue = list(prefix = "Cycle Number: ", font = list(color="royalblue"))) %>%
+  layout(title = "VOLTAGE: Mean to Standard Deviation", xaxis = list(title ='x = Mean/cycle'), yaxis = list(title ='y = Standard Deviation/cycle'))
+```
+
+### Voltage variations: Anomalous Standard data
+
+Conveyor or Rail | Mean(Max)| Mean(Min)| σ (Max)  | σ (Min)   
+-----------------|----------|----------|----------|----------
+  Voltage BLO    |   20.08  |    0.00  |   37.08  |    0.00
+  Voltage BHL    |   22.92  |    0.00  |   27.04  |    0.00
+  Voltage BHR    |   30.56  |    0.00  |   27.02  |    0.00
+  Voltage BRU    |   39.00  |    0.00  |   27.50  |    0.00
+  Voltage  HL    |  136.86  |    0.00  |  190.09  |    0.00
+  Voltage  HR    |  136.57  |    0.00  |  189.53  |    0.00
+
+```{r, warning=FALSE, message=FALSE}
+nASt %>% plot_ly(type = 'scatter', mode = 'markers', marker=list(size=~23, opacity=0.63,symbol = I(21))) %>% 
+  add_markers(x= ~Voltage.BLO.x, y= ~Voltage.BLO.y, frame= ~CyN, name = "BLO") %>% 
+  add_markers(x= ~Voltage.BHL.x, y= ~Voltage.BHL.y, frame= ~CyN, name = "BHL") %>% 
+  add_markers(x= ~Voltage.BHR.x, y= ~Voltage.BHR.y, frame= ~CyN, name = "BHR") %>% 
+  add_markers(x= ~Voltage.BRU.x, y= ~Voltage.BRU.y, frame= ~CyN, name = "BRU") %>% 
+  add_markers(x= ~Voltage.HL.x, y= ~Voltage.HL.y, frame= ~CyN, name = "HL") %>% 
+  add_markers(x= ~Voltage.HR.x, y= ~Voltage.HR.y, frame= ~CyN, name = "HR") %>% 
+  animation_opts(frame = 1000) %>% 
+  animation_slider(currentvalue = list(prefix = "Cycle Number: ", font = list(color="royalblue"))) %>%
+  layout(title = "VOLTAGE: Mean to Standard Deviation", xaxis = list(title ='x = Mean/cycle'), yaxis = list(title ='y = Standard Deviation/cycle'))
+```
+
+### Voltage variations: Anomalous Optimized data
+
+Conveyor or Rail | Mean(Max)| Mean(Min)| σ (Max)  | σ (Min)   
+-----------------|----------|----------|----------|----------
+  Voltage BLO    |   18.48  |    0.00  |   23.33  |    0.00
+  Voltage BHL    |   28.77  |    0.00  |   42.49  |    0.00
+  Voltage BHR    |   39.00  |    0.00  |   40.90  |    0.00
+  Voltage BRU    |   50.77  |    9.61  |   27.14  |    3.15
+  Voltage  HL    |   77.49  |   12.43  |   80.07  |    0.38
+  Voltage  HR    |   81.20  |   13.50  |   82.05  |    0.73
+
+```{r, warning=FALSE, message=FALSE}
+nAOp %>% plot_ly(type = 'scatter', mode = 'markers', marker=list(size=~23, opacity=0.63,symbol = I(21))) %>% 
+  add_markers(x= ~Voltage.BLO.x, y= ~Voltage.BLO.y, frame= ~CyN, name = "BLO") %>% 
+  add_markers(x= ~Voltage.BHL.x, y= ~Voltage.BHL.y, frame= ~CyN, name = "BHL") %>% 
+  add_markers(x= ~Voltage.BHR.x, y= ~Voltage.BHR.y, frame= ~CyN, name = "BHR") %>% 
+  add_markers(x= ~Voltage.BRU.x, y= ~Voltage.BRU.y, frame= ~CyN, name = "BRU") %>% 
+  add_markers(x= ~Voltage.HL.x, y= ~Voltage.HL.y, frame= ~CyN, name = "HL") %>% 
+  add_markers(x= ~Voltage.HR.x, y= ~Voltage.HR.y, frame= ~CyN, name = "HR") %>% 
+  animation_opts(frame = 1000) %>% 
+  animation_slider(currentvalue = list(prefix = "Cycle Number: ", font = list(color="royalblue"))) %>%
+  layout(title = "VOLTAGE: Mean to Standard Deviation", xaxis = list(title ='x = Mean/cycle'), yaxis = list(title ='y = Standard Deviation/cycle'))
+```
+
+## Power & Weg (or Distance) {.tabset .tabset-fade .tabset-pills}
+
+Zhang and Xia stated JIS B 8805 and Goodyear Tire & Rubber Company's 1975 model are based on "Energy Conversion based model" methodology. Where Power of conveyor belts, under stationary conditions, can be divided into three parts.It is as follows.[4]
+
+1. Power<sub>ec</sub> : Power to run empty conveyor.
+2. Power<sub>h</sub> : Power to move the material horizontally over certain distance.
+3. Power<sub>l</sub> : Power to lift the material a certain height.
+
+To this they add Power<sub>acs</sub> as Power of accessories and defined Total Power as Power<sub>T</sub>
+
+\Power<sub>T</sub> = Power<sub>ec</sub> + Power<sub>h</sub> + Power<sub>l</sub> + Power<sub>acs</sub>\
+
+Lets see how Power of various conveyors and rails pan out with respect to Weg (or Distance) covered.
+
+### Power & Weg variations: MEAN : Normal Standard data
+
+Table showing Median value of the means of Power & Weg
+
+Conveyor or Rail | Power(Median)| Weg (Median)   
+-----------------|--------------|-------------
+          BLO    |      4939    |    43.99  
+          BHL    |      7030    |    42.23  
+          BHR    |      6187    |    42.33  
+          BRU    |      5101    |   429.70  
+           HL    |     13185    |  -411.40  
+           HR    |     11292    |  -411.50  
+
+```{r, warning=FALSE, message=FALSE}
+nNSt %>% plot_ly(type = 'scatter', mode = 'markers', marker=list(size=~Timestamp.x*4, opacity=0.63,symbol = I(19))) %>% 
+  add_markers(x= ~Power.BLO.x, y= ~Weg.BLO.x, frame= ~CyN, name = "BLO") %>% 
+  add_markers(x= ~Power.BHL.x, y= ~Weg.BHL.x, frame= ~CyN, name = "BHL") %>% 
+  add_markers(x= ~Power.BHR.x, y= ~Weg.BHR.x, frame= ~CyN, name = "BHR") %>% 
+  add_markers(x= ~Power.BRU.x, y= ~Weg.BRU.x, frame= ~CyN, name = "BRU") %>% 
+  add_markers(x= ~Power.HL.x, y= ~Weg.HL.x, frame= ~CyN, name = "HL") %>% 
+  add_markers(x= ~Power.HR.x, y= ~Weg.HR.x, frame= ~CyN, name = "HR") %>% 
+  animation_opts(frame = 1000) %>% 
+  animation_slider(currentvalue = list(prefix = "Cycle Number: ", font = list(color="royalblue"))) %>%
+  layout(title = "mean Power to mean Distance per cycle", xaxis = list(title = 'mean POWER'), yaxis = list(title = 'mean WEG (or Distance)'))
+```
+
+### Power & Weg variations: MEAN : Normal Optimized data
+
+Table showing Median value of the means of Power & Weg
+
+Conveyor or Rail | Power(Median)| Weg (Median)   
+-----------------|--------------|-------------
+          BLO    |      5436    |    39.16  
+          BHL    |      4174    |    55.82  
+          BHR    |      4438    |    -5.87  
+          BRU    |      6515    |   360.20  
+           HL    |     12517    |  -405.50  
+           HR    |     11524    |  -405.50  
+
+
+```{r, warning=FALSE, message=FALSE}
+nNOp %>% plot_ly(type = 'scatter', mode = 'markers', marker=list(size=~Timestamp.x*4, opacity=0.63,symbol = I(19))) %>% 
+  add_markers(x= ~Power.BLO.x, y= ~Weg.BLO.x, frame= ~CyN, name = "BLO") %>% 
+  add_markers(x= ~Power.BHL.x, y= ~Weg.BHL.x, frame= ~CyN, name = "BHL") %>% 
+  add_markers(x= ~Power.BHR.x, y= ~Weg.BHR.x, frame= ~CyN, name = "BHR") %>% 
+  add_markers(x= ~Power.BRU.x, y= ~Weg.BRU.x, frame= ~CyN, name = "BRU") %>% 
+  add_markers(x= ~Power.HL.x, y= ~Weg.HL.x, frame= ~CyN, name = "HL") %>% 
+  add_markers(x= ~Power.HR.x, y= ~Weg.HR.x, frame= ~CyN, name = "HR") %>% 
+  animation_opts(frame = 1000) %>% 
+  animation_slider(currentvalue = list(prefix = "Cycle Number: ", font = list(color="royalblue"))) %>%
+  layout(title = "mean Power to mean Distance per cycle", xaxis = list(title = 'mean POWER'), yaxis = list(title = 'mean WEG (or Distance)'))
+```
+
+### Power & Weg variations: MEAN : Anomalous Standard data
+
+Table showing Median value of the means of Power & Weg
+
+Conveyor or Rail | Power(Median)| Weg (Median)   
+-----------------|--------------|-------------
+          BLO    |      4906    |    43.83  
+          BHL    |      6950    |    58.39  
+          BHR    |      6118    |    40.22  
+          BRU    |      5078    |   430.80  
+           HL    |     13324    |  -411.70  
+           HR    |     11257    |  -411.30  
+
+```{r, warning=FALSE, message=FALSE}
+nASt %>% plot_ly(type = 'scatter', mode = 'markers', marker=list(size=~Timestamp.x*4, opacity=0.63,symbol = I(19))) %>% 
+  add_markers(x= ~Power.BLO.x, y= ~Weg.BLO.x, frame= ~CyN, name = "BLO") %>% 
+  add_markers(x= ~Power.BHL.x, y= ~Weg.BHL.x, frame= ~CyN, name = "BHL") %>% 
+  add_markers(x= ~Power.BHR.x, y= ~Weg.BHR.x, frame= ~CyN, name = "BHR") %>% 
+  add_markers(x= ~Power.BRU.x, y= ~Weg.BRU.x, frame= ~CyN, name = "BRU") %>% 
+  add_markers(x= ~Power.HL.x, y= ~Weg.HL.x, frame= ~CyN, name = "HL") %>% 
+  add_markers(x= ~Power.HR.x, y= ~Weg.HR.x, frame= ~CyN, name = "HR") %>% 
+  animation_opts(frame = 1000) %>% 
+  animation_slider(currentvalue = list(prefix = "Cycle Number: ", font = list(color="royalblue"))) %>%
+  layout(title = "mean Power to mean Distance per cycle", xaxis = list(title = 'mean POWER'), yaxis = list(title = 'mean WEG (or Distance)'))
+```
+
+### Power & Weg variations: MEAN : Anomalous Optimized data
+
+Table showing Median value of the means of Power & Weg
+
+Conveyor or Rail | Power(Median)| Weg (Median)   
+-----------------|--------------|-------------
+          BLO    |      5354    |    39.41  
+          BHL    |      4083    |    55.13  
+          BHR    |      4525    |    -5.72  
+          BRU    |      6460    |   363.80  
+           HL    |     12163    |  -406.80  
+           HR    |     11382    |  -406.00  
+
+```{r, warning=FALSE, message=FALSE}
+nAOp %>% plot_ly(type = 'scatter', mode = 'markers', marker=list(size=~Timestamp.x*4, opacity=0.63,symbol = I(19))) %>% 
+  add_markers(x= ~Power.BLO.x, y= ~Weg.BLO.x, frame= ~CyN, name = "BLO") %>% 
+  add_markers(x= ~Power.BHL.x, y= ~Weg.BHL.x, frame= ~CyN, name = "BHL") %>% 
+  add_markers(x= ~Power.BHR.x, y= ~Weg.BHR.x, frame= ~CyN, name = "BHR") %>% 
+  add_markers(x= ~Power.BRU.x, y= ~Weg.BRU.x, frame= ~CyN, name = "BRU") %>% 
+  add_markers(x= ~Power.HL.x, y= ~Weg.HL.x, frame= ~CyN, name = "HL") %>% 
+  add_markers(x= ~Power.HR.x, y= ~Weg.HR.x, frame= ~CyN, name = "HR") %>% 
+  animation_opts(frame = 1000) %>% 
+  animation_slider(currentvalue = list(prefix = "Cycle Number: ", font = list(color="royalblue"))) %>%
+  layout(title = "mean Power to mean Distance per cycle", xaxis = list(title = 'mean POWER'), yaxis = list(title = 'mean WEG (or Distance)'))
+```
+
+# Tree-based: Total Power in Anomalies
+
+In my opinion, Anomalous Standard data set is more close to real life situation. So we have a task in hand that represent conditions and situations are is represented by the data. Now our objective is to draw efficiency for and in that cyber-physical system. Hence we do optimization to reach at - as per data — to a situation more like Anomalous Optimized data set.
+
+In this section takes a deep dive into how the data quoted for Anomalies either actual or synthetic emerges. The approach I have take is to Tree-based regression analysis. This is one of the easiest way to see the segmentation of data and understand the rationale behind it. In these sub-sections the objective is not to build an opitmization model or behaviour pattern, but only to demonstrate and to have better visual understanding of cyber-physical production systems. How step by step they are build?
+
+So I have only chosen Anomalous Standard and Optimized data sets.
+
+## Tree: Regression for Total Power
+
+In this Tree presentation, I show how Total Power of Aomalous Optimized data is linearly related to powers of each conveyor and rail.  
+
+```{r, warning=FALSE, message=FALSE}
+
+AOpr <- rpart(Tot.Power ~ Power.BLO + Power.BHL + Power.BHR + Power.BRU + Power.HL + Power.HR, AOp, cp = 0.004)
+
+rpart.plot(AOpr, box.palette = "RdYlGn", branch.lty = 20, trace = 1, cex = 0.45)
+```
+
+## Tree Build-up {.tabset .tabset-fade .tabset-pills}
+
+This is Tree Build-up.  
+
+### Anomalies' Optimized data
+
+Anomalies of Anomalous Optimized data has been taken. Total Power variable has been stated as objective to develop linear relation with all the power variables of Conveyors and Rails. As the Tree builds up, step by step, that section of tree turns navy blue in colour. 
+
+**Please Note:** This is only presentation and no conclusion has been drawn our of it.
+
+```{r, warning=FALSE, message=FALSE}
+AOp.2.2 <- AOp %>% filter(Labels == 1) %>% select(1:22) %>% group_by(CyN)%>% summarise_all(funs(mean))
+AOpr <- rpart(Tot.Power ~ Power.BLO + Power.BHL + Power.BHR + Power.BRU + Power.HL + Power.HR, AOp.2.2, cp = 0.005)
+
+par(mfrow = c(4,4))
+par(mar = c(1,1,1,1))
+for(iframe in 1:nrow(AOpr$frame)) {
+  cols <- ifelse(1:nrow(AOpr$frame) <= iframe, "navyblue", "plum")
+  prp(AOpr, col = cols, branch.col = cols, split.col = cols)
+}
+```
+
+## Tree: Graphical representation {.tabset .tabset-fade .tabset-pills}
+
+### Standard data: Anomalies
+
+In this graph Anomalies of Anomalous Standard data has been taken. The Total Power vs Timestamp variables has been shown. You'll observe the data with Anomalies is NOT spread across complete time horizon of 15-16 secs cycle. They have very short timestamp cycle.
+
+```{r, warning=FALSE, message=FALSE}
+ASt %>% filter(Labels == 1) %>% plot_ly(type = 'scatter', mode = 'markers', marker=list(size=~15, opacity=0.36, color = "red", symbol = I(25))) %>% 
+  add_markers(x= ~Timestamp, y= ~Tot.Power, frame= ~CyN) %>% 
+  animation_opts(frame = 750) %>% 
+  animation_slider(currentvalue = list(prefix = "Cycle Number: ", font = list(color="royalblue"))) %>%
+  layout(title = "Standard data :: Total Power in Anomalies", xaxis = list(title = 'Timestamp (secs)'), yaxis = list(title = 'Total Power'))
+```
+
+### Optimized data: Anomalies
+
+In this graph Anomalies of Anomalous Optimized data has been taken. The Total Power vs Timestamp variables has been shown. You'll observe the data with Anomalies is NOT spread across complete time horizon of 15-16 secs cycle. They have very short timestamp cycle.
+
+```{r, warning=FALSE, message=FALSE}
+AOp %>% filter(Labels == 1) %>% plot_ly(type = 'scatter', mode = 'markers', marker=list(size=~15, opacity=0.36, color = "red", symbol = I(25))) %>% 
+  add_markers(x= ~Timestamp, y= ~Tot.Power, frame= ~CyN) %>% 
+  animation_opts(frame = 750) %>% 
+  animation_slider(currentvalue = list(prefix = "Cycle Number: ", font = list(color="royalblue"))) %>%
+  layout(title = "Optimized data :: Total Power in Anomalies", xaxis = list(title = 'Timestamp (secs)'), yaxis = list(title = 'Total Power'))
+```
+
+# Conclusion
+
+I would like to state this whole exercise emphasises on graphical presentation of the data of all 4 data sets. I tried pictorial presentation to explain CPPS' phenomenon, relationships between sub-systems, behaviour of data, patterns if any, and data generation etc. 
+
+In principle, the data recorded is in coherence with physical movement of object on conveyors and rails. A simple look at graphs of Power & Voltage will show where the object was at a given timestamp. 
+
+Each graph is replicated for all data sets to show variances of variables with respect to data generated form i.e. Normal vs Anomalous for Standard and Optimized versions and Standard vs Optimized for Normal and Anomalous versions.
+
+On the other hand, Hranisavljevic et al. and von Birgelen et al. had mentioned Self-Organizing Maps (SOM), Deep Anomaly Detection (DAD), Artificial Intelligence (especially Restricted Boltzmann machine) to recognise normal behaviour, anomalies, new patterns, or unknown events etc.[2,3].
+
+Hope you enjoyed reading it. Please do upvote.
+
+# References
+
+1. Clénet, Daniel [*Schneider Electric*]: Optimizing energy efficiency of conveyors. Jan 2010.
+
+2. Hranisavljevic, Nemanja [*Institute Industrial IT, Germany*]; Niggemann, Oliver[*Institute Industrial IT, Germany*]; Maier, Alexander[*Fraunhofer Application Center Industrial Automation, Germany*]: A Novel anomaly detection algorithm for Hybrid Production Systems based on Deep Learning and Times Automata. Oct 2016.
+
+3. von Birgelen, Alexander [*Institute Industrial IT, Germany*]; Niggemann, Oliver [*Institute Industrial IT, Germany*]: Using Self-Organizing maps to learn Hybrid Timed Automata in absence of discrete events. Sep 2017.
+
+4. Zhang, Shirong [*Wuhan University, China*]; Xia, Xiaohua [*University of Pretoria, South Africa*]:Modeling the energy efficiency optimization of belt conveyors. Mar 2011.
+
+# Appendix: Energy Optimization of conveyors
+
+I liked white papar by Daniel Clénet of Schneider Electric. I would recommend the reader to read it. He beautifully described equations Energy Optimization of conveyors with diagrams. Let me quote few excerpts. 
+
+Daniel Clénet of Schneider Electric in his January 2010's white paper defined Power consumption as indirect and variable costs. He said, "they are difficult to evaluate and require a complex process and an in depth analysis. Energy optimization has most impact on these costs".[1].
+
+In his Operational analysis part he emphasised on respecting physical constraints. 
+
+The position of Input<sub>sensor</sub> relative to the loading zone of the conveyor (Sensor<sub>distance</sub>) must cover two constraints[1].:
+
+1. \Sensor<sub>distance</sub> < Load<sub>length</sub>\
+2. \Sensor<sub>distance</sub> ≥ Conveyor<sub>velocity</sub> x Starting<sub>time</sub>\
+
+where:
+
+1. Conveyor<sub>velocity</sub> is velocity of the upstream conveyor.
+2. Input<sub>sensor</sub> is upstream Sensor.
+3. Load<sub>length</sub> is size of Load.
+4. Starting<sub>time</sub> is Time needed to start the conveyor till its normal speed
+
+Thus: 
+
+$$ Conveyor_{velocity} \times Starting_{time} ≤ Sensor_{distance} < Load_{length} $$
+
+In similar fashion he had defined the equation of energy saving without degrading the performance of conveyors.
